@@ -221,9 +221,9 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-black text-neutral-950 mb-6">Delivery Address</h2>
               {addresses.length > 0 ? (
                 <div className="space-y-3 mb-5">
-                  {addresses.map((addr) => (
+                  {addresses.map((addr, idx) => (
                     <label
-                      key={addr.id}
+                      key={addr.id || idx}
                       className={`flex items-start gap-4 p-5 rounded-[24px] border-2 cursor-pointer transition-all ${
                         selectedAddress === addr.id
                           ? 'border-neutral-950 bg-neutral-50 shadow-sm'

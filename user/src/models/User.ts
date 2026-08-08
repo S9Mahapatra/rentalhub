@@ -33,7 +33,7 @@ const AddressSchema = new Schema<IAddress>({
   zipCode: { type: String, required: true, trim: true },
   country: { type: String, required: true, default: 'India', trim: true },
   isDefault: { type: Boolean, default: false },
-}, { _id: false });
+});
 
 const UserSchema = new Schema<IUser>(
   {

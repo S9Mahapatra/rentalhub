@@ -267,8 +267,8 @@ export default function ProfilePage() {
             {addresses.length === 0 ? (
               <p className="text-neutral-500 text-sm font-medium">No addresses added yet.</p>
             ) : (
-              addresses.map((addr) => (
-                <div key={addr.id} className="p-5 bg-white rounded-[24px] border border-neutral-200/80 shadow-sm">
+              addresses.map((addr, idx) => (
+                <div key={addr.id || idx} className="p-5 bg-white rounded-[24px] border border-neutral-200/80 shadow-sm">
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <div className="min-w-0">
                       <span className="text-neutral-950 text-sm font-black">{addr.label}</span>
