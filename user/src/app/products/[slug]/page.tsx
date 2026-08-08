@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, ShieldCheck, Truck, Store, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import BookingWidget from '@/components/product/BookingWidget';
 import connectToDatabase from '@/lib/mongodb';
 import Product from '@/models/Product';
 import mongoose from 'mongoose';
@@ -56,6 +57,7 @@ export default async function ProductDetailsPage({ params }: PageProps) {
                 src={imageUrl} 
                 alt={product.name} 
                 fill 
+                sizes="(max-width: 1024px) 100vw, 60vw"
                 className="object-contain p-8 transition-transform duration-700 group-hover:scale-105"
                 priority
               />
@@ -169,23 +171,12 @@ export default async function ProductDetailsPage({ params }: PageProps) {
                   <span className="font-black text-neutral-950 text-base">{formatCurrency(product.securityDeposit || 0)}</span>
                 </div>
 
-                {/* Action Button */}
-                <button 
-                  className={`w-full py-4 rounded-full font-black text-sm flex items-center justify-center gap-2 transition-all ${
-                    isAvailable 
-                      ? 'bg-neutral-950 hover:bg-neutral-800 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]' 
-                      : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                  }`}
-                >
-                  {isAvailable ? (
-                    <>
-                      <span>CHECK AVAILABILITY & RENT</span>
-                      <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-                    </>
-                  ) : (
-                    'CURRENTLY UNAVAILABLE'
-                  )}
-                </button>
+                {/* Booking Widget (Dates + Action Button) */}
+                <BookingWidget 
+                  productId={product._id.toString()}
+                  isAvailable={isAvailable}
+                  minRentalDays={product.minRentalDays || 1}
+                />
                 
                 {/* Fulfillment Info */}
                 <div className="flex items-center justify-center gap-6 mt-6">

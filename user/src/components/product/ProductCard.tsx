@@ -82,6 +82,8 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
           src={imageUrl}
           alt={product.name}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          priority={index < 6}
           className="object-cover rounded-[10px] transition-transform duration-700 group-hover:scale-110"
         />
         
