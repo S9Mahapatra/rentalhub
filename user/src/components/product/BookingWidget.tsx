@@ -70,6 +70,12 @@ export default function BookingWidget({ productId, isAvailable, minRentalDays }:
 
       const data = await res.json();
 
+      if (res.status === 401) {
+        toast.error('Please log in to rent this item.');
+        router.push('/auth/login?callbackUrl=' + encodeURIComponent(window.location.href));
+        return;
+      }
+
       if (!res.ok) {
         toast.error(data.error || 'Failed to add to cart.');
         setLoading(false);
