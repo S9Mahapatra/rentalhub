@@ -74,10 +74,11 @@ export default function CheckoutPage() {
 
   if (!session) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <p className="text-dark-400 mb-4">Please sign in to continue checkout</p>
-        <Link href="/auth/login" className="px-6 py-2 bg-brand-600 text-white rounded-xl font-medium">
-          Sign In
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
+        <h2 className="text-2xl font-black text-neutral-950 mb-2 tracking-tight">Sign in required</h2>
+        <p className="text-neutral-500 font-medium mb-8 text-center max-w-sm">Please sign in to continue checkout.</p>
+        <Link href="/auth/login" className="px-8 py-4 bg-neutral-950 hover:bg-neutral-800 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]">
+          SIGN IN TO CONTINUE
         </Link>
       </div>
     );
@@ -85,15 +86,15 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="h-8 bg-dark-800 rounded w-48 mb-6 animate-pulse" />
+      <div className="max-w-5xl mx-auto px-4 py-12 md:py-20">
+        <div className="h-8 bg-neutral-200/60 rounded-xl w-48 mb-8 animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-dark-800 rounded-2xl animate-pulse" />
+              <div key={i} className="h-32 bg-neutral-100/60 rounded-[24px] animate-pulse" />
             ))}
           </div>
-          <div className="h-64 bg-dark-800 rounded-2xl animate-pulse" />
+          <div className="h-64 bg-neutral-100/60 rounded-[32px] animate-pulse" />
         </div>
       </div>
     );
@@ -101,11 +102,11 @@ export default function CheckoutPage() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-xl font-bold text-white mb-2">Checkout unavailable</h2>
-        <p className="text-dark-400 mb-6">{error}</p>
-        <button onClick={() => router.refresh()} className="px-6 py-2.5 bg-brand-600 text-white rounded-xl font-medium">
-          Retry
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
+        <h2 className="text-2xl font-black text-neutral-950 mb-2 tracking-tight">Checkout unavailable</h2>
+        <p className="text-neutral-500 font-medium mb-8">{error}</p>
+        <button onClick={() => router.refresh()} className="px-8 py-4 bg-neutral-950 hover:bg-neutral-800 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]">
+          RETRY
         </button>
       </div>
     );
@@ -113,10 +114,11 @@ export default function CheckoutPage() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <p className="text-dark-400 mb-4">Your cart is empty</p>
-        <Link href="/products" className="px-6 py-2.5 bg-brand-600 text-white rounded-xl font-medium">
-          Browse Products
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
+        <h2 className="text-3xl font-black text-neutral-950 mb-3 tracking-tight">Your bag is empty</h2>
+        <p className="text-neutral-500 font-medium mb-8 max-w-sm">You need items in your cart to checkout.</p>
+        <Link href="/products" className="px-8 py-4 bg-neutral-950 hover:bg-neutral-800 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]">
+          BROWSE CATALOG
         </Link>
       </div>
     );
@@ -166,14 +168,14 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-white mb-6">Checkout</h1>
+    <div className="max-w-5xl mx-auto px-4 py-12 md:py-20">
+      <h1 className="text-3xl font-black text-neutral-950 mb-8 tracking-tight">Checkout</h1>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-dark-800/40 border border-white/5 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Delivery Method</h2>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white border border-neutral-200/80 rounded-[32px] p-6 sm:p-8 shadow-sm">
+            <h2 className="text-lg font-black text-neutral-950 mb-6">Delivery Method</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 {
                   value: 'delivery' as const,
@@ -192,19 +194,21 @@ export default function CheckoutPage() {
                   key={opt.value}
                   type="button"
                   onClick={() => setDeliveryMethod(opt.value)}
-                  className={`p-4 rounded-2xl border text-left transition-all ${
+                  className={`p-5 rounded-[24px] border-2 text-left transition-all ${
                     deliveryMethod === opt.value
-                      ? 'border-brand-500 bg-brand-500/10'
-                      : 'border-white/10 bg-dark-800 hover:border-white/20'
+                      ? 'border-neutral-950 bg-neutral-50 shadow-sm'
+                      : 'border-neutral-100 bg-white hover:border-neutral-200 hover:bg-neutral-50/50'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={opt.icon} />
-                    </svg>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${deliveryMethod === opt.value ? 'bg-neutral-950 text-white' : 'bg-neutral-100 text-neutral-400'}`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={opt.icon} />
+                      </svg>
+                    </div>
                     <div>
-                      <p className="text-white text-sm font-medium">{opt.label}</p>
-                      <p className="text-dark-400 text-xs">{opt.desc}</p>
+                      <p className={`text-sm font-black ${deliveryMethod === opt.value ? 'text-neutral-950' : 'text-neutral-700'}`}>{opt.label}</p>
+                      <p className="text-neutral-500 text-xs mt-0.5 font-medium">{opt.desc}</p>
                     </div>
                   </div>
                 </button>
@@ -213,17 +217,17 @@ export default function CheckoutPage() {
           </div>
 
           {deliveryMethod === 'delivery' && (
-            <div className="bg-dark-800/40 border border-white/5 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Delivery Address</h2>
+            <div className="bg-white border border-neutral-200/80 rounded-[32px] p-6 sm:p-8 shadow-sm">
+              <h2 className="text-lg font-black text-neutral-950 mb-6">Delivery Address</h2>
               {addresses.length > 0 ? (
-                <div className="space-y-2 mb-4">
+                <div className="space-y-3 mb-5">
                   {addresses.map((addr) => (
                     <label
                       key={addr.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                      className={`flex items-start gap-4 p-5 rounded-[24px] border-2 cursor-pointer transition-all ${
                         selectedAddress === addr.id
-                          ? 'border-brand-500 bg-brand-500/10'
-                          : 'border-white/10 hover:border-white/20'
+                          ? 'border-neutral-950 bg-neutral-50 shadow-sm'
+                          : 'border-neutral-100 bg-white hover:border-neutral-200 hover:bg-neutral-50/50'
                       }`}
                     >
                       <input
@@ -231,11 +235,11 @@ export default function CheckoutPage() {
                         name="address"
                         checked={selectedAddress === addr.id}
                         onChange={() => setSelectedAddress(addr.id)}
-                        className="accent-brand-500"
+                        className="mt-1 accent-neutral-950 w-4 h-4"
                       />
                       <div className="text-sm">
-                        <span className="text-white font-medium">{addr.label}</span>
-                        <span className="text-dark-400 ml-2">
+                        <span className={`font-black block mb-1 ${selectedAddress === addr.id ? 'text-neutral-950' : 'text-neutral-700'}`}>{addr.label}</span>
+                        <span className="text-neutral-500 font-medium leading-relaxed">
                           {addr.street}, {addr.city}, {addr.state} {addr.zipCode}
                         </span>
                       </div>
@@ -243,17 +247,17 @@ export default function CheckoutPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-dark-400">Add addresses from your profile page.</p>
+                <p className="text-sm text-neutral-500 mb-4 font-medium">Add addresses from your profile page.</p>
               )}
-              <Link href="/profile" className="text-xs text-brand-400 hover:text-brand-300">
+              <Link href="/profile" className="text-xs font-black tracking-widest uppercase text-neutral-950 hover:text-neutral-700 underline decoration-2 underline-offset-4 decoration-emerald-400">
                 Manage addresses
               </Link>
             </div>
           )}
 
-          <div className="bg-dark-800/40 border border-white/5 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Payment Method</h2>
-            <div className="space-y-2">
+          <div className="bg-white border border-neutral-200/80 rounded-[32px] p-6 sm:p-8 shadow-sm">
+            <h2 className="text-lg font-black text-neutral-950 mb-6">Payment Method</h2>
+            <div className="space-y-3">
               {[
                 { value: 'card', label: 'Credit/Debit Card' },
                 { value: 'upi', label: 'UPI' },
@@ -262,10 +266,10 @@ export default function CheckoutPage() {
               ].map((opt) => (
                 <label
                   key={opt.value}
-                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                  className={`flex items-center gap-4 p-5 rounded-[24px] border-2 cursor-pointer transition-all ${
                     paymentMethod === opt.value
-                      ? 'border-brand-500 bg-brand-500/10'
-                      : 'border-white/10 hover:border-white/20'
+                      ? 'border-neutral-950 bg-neutral-50 shadow-sm'
+                      : 'border-neutral-100 bg-white hover:border-neutral-200 hover:bg-neutral-50/50'
                   }`}
                 >
                   <input
@@ -274,60 +278,60 @@ export default function CheckoutPage() {
                     value={opt.value}
                     checked={paymentMethod === opt.value}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="accent-brand-500"
+                    className="accent-neutral-950 w-4 h-4"
                   />
-                  <span className="text-sm text-white">{opt.label}</span>
+                  <span className={`text-sm font-black ${paymentMethod === opt.value ? 'text-neutral-950' : 'text-neutral-700'}`}>{opt.label}</span>
                 </label>
               ))}
             </div>
-            <p className="text-xs text-dark-400 mt-3">
+            <p className="text-[11px] font-medium text-neutral-400 mt-6 bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
               Payments are processed through the current mock gateway abstraction and can be swapped for a real provider later.
             </p>
           </div>
         </div>
 
-        <div className="bg-dark-800/40 border border-white/5 rounded-2xl p-6 h-fit sticky top-24">
-          <h2 className="text-lg font-semibold text-white mb-4">Order Summary</h2>
-          <div className="space-y-3 mb-4">
+        <div className="bg-[#F7F7F9] border border-neutral-200/80 rounded-[32px] p-6 sm:p-8 h-fit sticky top-24 shadow-sm">
+          <h2 className="text-lg font-black text-neutral-950 mb-6">Order Summary</h2>
+          <div className="space-y-4 mb-6">
             {cart.items.map((item: any) => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-dark-300 truncate mr-2">
-                  {item.product.name} × {item.quantity}
+              <div key={item.id} className="flex justify-between text-sm items-start gap-4">
+                <span className="text-neutral-700 font-semibold line-clamp-2">
+                  {item.product.name} <span className="text-neutral-400">× {item.quantity}</span>
                 </span>
-                <span className="text-white shrink-0">{formatCurrency(item.totalPrice)}</span>
+                <span className="text-neutral-950 font-black shrink-0">{formatCurrency(item.totalPrice)}</span>
               </div>
             ))}
           </div>
-          <div className="border-t border-white/5 pt-3 space-y-2">
+          <div className="border-t border-neutral-200/80 pt-6 space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-dark-400">Rental Subtotal</span>
-              <span className="text-white">{formatCurrency(summary.subtotal)}</span>
+              <span className="text-neutral-500 font-semibold">Rental Subtotal</span>
+              <span className="text-neutral-950 font-black">{formatCurrency(summary.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-dark-400">Security Deposits</span>
-              <span className="text-white">{formatCurrency(summary.depositTotal)}</span>
+              <span className="text-neutral-500 font-semibold">Security Deposits</span>
+              <span className="text-neutral-950 font-black">{formatCurrency(summary.depositTotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-dark-400">Delivery</span>
-              <span className="text-white">{summary.deliveryFee > 0 ? formatCurrency(summary.deliveryFee) : 'Free'}</span>
+              <span className="text-neutral-500 font-semibold">Delivery</span>
+              <span className="text-neutral-950 font-black">{summary.deliveryFee > 0 ? formatCurrency(summary.deliveryFee) : 'Free'}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-dark-400">Tax (18% GST)</span>
-              <span className="text-white">{formatCurrency(summary.tax)}</span>
+              <span className="text-neutral-500 font-semibold">Tax (18% GST)</span>
+              <span className="text-neutral-950 font-black">{formatCurrency(summary.tax)}</span>
             </div>
           </div>
-          <div className="border-t border-white/5 pt-3 mt-3 flex justify-between">
-            <span className="text-white font-semibold">Total Due</span>
-            <span className="text-brand-400 font-bold text-xl">{formatCurrency(summary.total)}</span>
+          <div className="border-t border-neutral-200/80 pt-6 mt-6 flex justify-between items-center">
+            <span className="text-neutral-950 font-black text-lg">Total Due</span>
+            <span className="text-emerald-600 font-black text-3xl">{formatCurrency(summary.total)}</span>
           </div>
           <button
             type="submit"
             disabled={processing || (deliveryMethod === 'delivery' && !selectedAddress)}
-            className="w-full mt-4 py-3.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20"
+            className="w-full mt-8 py-5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
           >
-            {processing ? 'Processing...' : 'Confirm Booking'}
+            {processing ? 'PROCESSING...' : 'CONFIRM BOOKING'}
           </button>
-          <p className="text-xs text-dark-400 text-center mt-3">
+          <p className="text-[11px] font-medium text-neutral-400 text-center mt-6">
             Security deposits are held during the rental and refunded after return, minus any applicable deductions.
           </p>
         </div>
