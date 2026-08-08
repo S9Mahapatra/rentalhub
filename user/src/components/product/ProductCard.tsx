@@ -77,7 +77,7 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
       <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/40 to-white/0 opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full duration-[1500ms] ease-in-out transition-all pointer-events-none z-20" style={{ transform: 'skewX(-20deg)' }}></div>
 
       {/* Image Container */}
-      <Link href={`/product/${product.slug || product.id}`} className="relative w-full aspect-[4/3] bg-neutral-50 group-hover:bg-emerald-50/30 transition-colors duration-500 rounded-[14px] overflow-hidden mb-5 p-1.5 flex items-center justify-center border border-neutral-100/80">
+      <Link href={`/products/${product.slug || product.id}`} className="relative w-full aspect-[4/3] bg-neutral-50 group-hover:bg-emerald-50/30 transition-colors duration-500 rounded-[14px] overflow-hidden mb-5 p-1.5 flex items-center justify-center border border-neutral-100/80">
         <Image
           src={imageUrl}
           alt={product.name}
@@ -123,7 +123,7 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
         </div>
 
         {/* Title */}
-        <Link href={`/product/${product.slug || product.id}`}>
+        <Link href={`/products/${product.slug || product.id}`}>
           <h3 className="text-[15px] font-bold text-neutral-950 line-clamp-2 mb-4 leading-snug group-hover:text-emerald-600 transition-colors">
             {product.name}
           </h3>
@@ -143,7 +143,7 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
           </div>
 
           <Link
-            href={`/product/${product.slug || product.id}`}
+            href={`/products/${product.slug || product.id}`}
             className={`px-5 py-2.5 rounded-full transition-all text-xs font-bold flex items-center justify-center gap-1.5 ${
               isAvailable
                 ? 'bg-neutral-950 hover:bg-neutral-850 text-white shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-95'
