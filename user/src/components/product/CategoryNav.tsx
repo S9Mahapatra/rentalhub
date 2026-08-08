@@ -1,54 +1,47 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { Video, Camera, Lightbulb, SlidersHorizontal, Briefcase, Flame } from 'lucide-react';
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  icon: string;
-}
+const CATEGORIES = [
+  { name: 'Cinema Rigs', icon: Video, href: '/products?category=cinema' },
+  { name: 'Mirrorless', icon: Camera, href: '/products?category=mirrorless' },
+  { name: 'Studio Light', icon: Lightbulb, href: '/products?category=lighting' },
+  { name: 'Sound Gear', icon: SlidersHorizontal, href: '/products?category=audio' },
+  { name: 'Production Kits', icon: Briefcase, href: '/products?category=kits' },
+  { name: 'Hot Deals', icon: Flame, href: '/products?category=deals' },
+];
 
 export default function CategoryNav() {
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    fetch('/api/categories')
-      .then((r) => r.json())
-      .then(({ data }) => setCategories(data || []))
-      .catch(() => {});
-  }, []);
-
-  if (categories.length === 0) return null;
-
   return (
-    <section className="py-16">
+    <section className="py-12 bg-app">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
-          <h2 className="text-2xl font-bold text-white mb-2">Browse by Category</h2>
-          <p className="text-dark-400 text-sm mb-8">Find exactly what you need</p>
-        </motion.div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          {categories.map((cat, i) => (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-            >
-              <Link
-                href={`/products?category=${cat.id}`}
-                className="flex flex-col items-center gap-3 p-5 bg-dark-800/30 border border-white/5 rounded-2xl hover:border-brand-500/30 hover:bg-dark-800/60 transition-all duration-300 group"
+        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 md:gap-16">
+          {CATEGORIES.map((cat, i) => {
+            const Icon = cat.icon;
+            return (
+              <motion.div
+                key={cat.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
               >
-                <span className="text-3xl group-hover:scale-125 transition-transform duration-300">{cat.icon}</span>
-                <span className="text-xs font-medium text-dark-300 group-hover:text-white transition-colors text-center">{cat.name}</span>
-              </Link>
-            </motion.div>
-          ))}
+                <Link
+                  href={cat.href}
+                  className="flex flex-col items-center gap-4 group"
+                >
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-brand-500 flex items-center justify-center transform transition-transform duration-300 group-hover:scale-110 shadow-lg shadow-brand-500/20">
+                    <Icon size={36} className="text-black" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-sm sm:text-base font-medium text-dark-200 group-hover:text-white transition-colors text-center tracking-wide">
+                    {cat.name}
+                  </span>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
