@@ -18,6 +18,14 @@ export interface IProduct extends Document {
   totalStock: number;
   availableStock: number;
   specifications: any;
+  attributes: Record<string, unknown>;
+  variants: {
+    name: string;
+    value: string;
+    sku?: string;
+    stock?: number;
+    additionalPrice?: number;
+  }[];
   features: string[];
   tags: string[];
   isActive: boolean;
@@ -47,6 +55,19 @@ const ProductSchema = new Schema<IProduct>(
     totalStock: { type: Number, default: 1 },
     availableStock: { type: Number, default: 1 },
     specifications: { type: Schema.Types.Mixed, default: {} },
+    attributes: { type: Schema.Types.Mixed, default: {} },
+    variants: {
+      type: [
+        {
+          name: { type: String, required: true },
+          value: { type: String, required: true },
+          sku: { type: String },
+          stock: { type: Number, default: 0 },
+          additionalPrice: { type: Number, default: 0 },
+        },
+      ],
+      default: [],
+    },
     features: [{ type: String }],
     tags: [{ type: String }],
     isActive: { type: Boolean, default: true },

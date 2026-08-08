@@ -1,53 +1,37 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
-import { generateOrderNumber } from '@/lib/utils';
-import Order from '@/models/Order';
-import Booking from '@/models/Booking';
+import {
+  createRentalCheckoutOrder,
+  getUserOrders,
+} from '@/lib/rental-service';
+import { checkoutSchema, getValidationErrorMessage } from '@/lib/validation';
 
 export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    await connectToDatabase();
-
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const skip = (page - 1) * limit;
+    const status = searchParams.get('status') || undefined;
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.max(1, parseInt(searchParams.get('limit') || '10', 10));
 
-    const where: any = { user: user.id };
-    if (status) where.status = status;
-
-    const [orders, total] = await Promise.all([
-      Order.find(where)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      Order.countDocuments(where),
-    ]);
-
-    const mappedOrders = orders.map(o => {
-      const doc = o.toJSON() as any;
-      doc.id = doc._id.toString();
-      doc.userId = doc.user.toString();
-      doc.items = (doc.items || []).map((item: any) => {
-        item.id = item._id ? item._id.toString() : '';
-        item.productId = item.product.toString();
-        item.orderId = doc.id;
-        return item;
-      });
-      return doc;
-    });
+    const orders = await getUserOrders(user.id, status);
+    const total = orders.length;
+    const start = (page - 1) * limit;
 
     return NextResponse.json({
       success: true,
-      data: mappedOrders,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      data: orders.slice(start, start + limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
+    console.error('Orders GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
   }
 }
@@ -57,60 +41,31 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { bookingIds, deliveryMethod, deliveryAddressId, paymentMethod } = await req.json();
-
-    await connectToDatabase();
-
-    const bookings = await Booking.find({ _id: { $in: bookingIds }, user: user.id, status: 'confirmed' }).populate('product');
-
-    if (bookings.length === 0) {
-      return NextResponse.json({ error: 'No valid bookings found' }, { status: 400 });
+    const body = await req.json();
+    const parsed = checkoutSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: getValidationErrorMessage(parsed.error) },
+        { status: 400 }
+      );
     }
 
-    const items = bookings.map((b: any) => ({
-      product: b.product._id,
-      productName: b.product.name,
-      quantity: b.quantity,
-      pricePerDay: b.pricePerDay,
-      rentalDays: b.rentalDays,
-      rentalAmount: b.rentalAmount,
-      securityDeposit: b.securityDeposit,
-    }));
-
-    const subtotal = items.reduce((s, i) => s + i.rentalAmount, 0);
-    const securityDepositTotal = items.reduce((s, i) => s + i.securityDeposit, 0);
-    const deliveryFee = deliveryMethod === 'delivery' ? 99 : 0;
-    const tax = Math.round(subtotal * 0.18);
-    const totalAmount = subtotal + securityDepositTotal + deliveryFee + tax;
-
-    const order = await Order.create({
-      user: user.id,
-      orderNumber: generateOrderNumber(),
-      subtotal,
-      securityDepositTotal,
-      deliveryFee,
-      tax,
-      totalAmount,
-      deliveryMethod,
-      deliveryAddressId: deliveryMethod === 'delivery' ? deliveryAddressId : null,
-      paymentMethod,
-      paymentStatus: 'paid',
-      status: 'confirmed',
-      items,
+    const result = await createRentalCheckoutOrder({
+      userId: user.id,
+      items: parsed.data.items,
+      deliveryMethod: parsed.data.deliveryMethod,
+      deliveryAddressId: parsed.data.deliveryAddressId || undefined,
+      paymentMethod: parsed.data.paymentMethod,
     });
 
-    const doc = order.toJSON() as any;
-    doc.id = doc._id.toString();
-    doc.userId = doc.user.toString();
-    doc.items = (doc.items || []).map((item: any) => {
-      item.id = item._id ? item._id.toString() : '';
-      item.productId = item.product.toString();
-      item.orderId = doc.id;
-      return item;
-    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
 
-    return NextResponse.json({ success: true, data: doc }, { status: 201 });
+    return NextResponse.json({ success: true, data: result.data }, { status: result.status });
   } catch (error) {
+    console.error('Orders POST error:', error);
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
   }
 }
+

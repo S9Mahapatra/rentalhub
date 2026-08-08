@@ -19,6 +19,8 @@ interface ProductCardProps {
 export default function ProductCard({ product, index, wishlistIds, onWishlistToggle }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState<boolean>(wishlistIds ? wishlistIds.includes(product.id) : false);
   const [loading, setLoading] = useState(false);
+  const isAvailable = (product as any).availability?.isAvailable ?? (product.availableStock > 0);
+  const imageUrl = product.imageUrl || product.images?.[0] || '/placeholder.jpg';
 
   useEffect(() => {
     if (wishlistIds) {
@@ -29,6 +31,7 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
   const handleToggle = async () => {
     if (onWishlistToggle) {
       onWishlistToggle(product.id);
+      window.dispatchEvent(new Event('wishlist-updated'));
       return;
     }
 
@@ -49,6 +52,7 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
       if (data.success) {
         const added = data.data.action === 'added';
         setIsWishlisted(added);
+        window.dispatchEvent(new Event('wishlist-updated'));
         toast.success(added ? 'Added to wishlist' : 'Removed from wishlist');
       } else {
         toast.error(data.error || 'Failed to update wishlist');
@@ -60,7 +64,6 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
     }
   };
 
-  const imageUrl = product.imageUrl || product.images?.[0] || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1000&auto=format&fit=crop';
 
   return (
     <motion.div
@@ -113,8 +116,15 @@ export default function ProductCard({ product, index, wishlistIds, onWishlistTog
 
         {/* Actions */}
         <div className="mt-auto flex items-center gap-3">
-          <Link href={`/product/${product.slug || product.id}`} className="flex-1 bg-brand-500 hover:bg-brand-400 text-black font-semibold py-2.5 rounded-lg transition-colors text-sm text-center">
-            RENT NOW
+          <Link
+            href={`/product/${product.slug || product.id}`}
+            className={`flex-1 font-semibold py-2.5 rounded-lg transition-colors text-sm text-center ${
+              isAvailable
+                ? 'bg-brand-500 hover:bg-brand-400 text-black'
+                : 'bg-white/5 text-dark-500 cursor-not-allowed pointer-events-none'
+            }`}
+          >
+            {isAvailable ? 'RENT NOW' : 'UNAVAILABLE'}
           </Link>
           <button 
             onClick={handleToggle}

@@ -3,8 +3,9 @@ import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
 import User from '@/models/User';
 import mongoose from 'mongoose';
-import '@/models/Product';
+import Product from '@/models/Product';
 import '@/models/Category';
+import { getValidationErrorMessage, wishlistSchema } from '@/lib/validation';
 
 export async function GET() {
   try {
@@ -43,10 +44,21 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { productId } = await req.json();
+    const body = await req.json();
+    const parsed = wishlistSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: getValidationErrorMessage(parsed.error) }, { status: 400 });
+    }
+
+    const { productId } = parsed.data;
 
     await connectToDatabase();
-    
+
+    const product = await Product.findById(productId).select('_id isActive');
+    if (!product || !product.isActive) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
     const userDoc = await User.findById(user.id);
     if (!userDoc) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 

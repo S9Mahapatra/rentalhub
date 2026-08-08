@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,25 @@ export default function Navbar() {
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
 
+  const refreshCounts = useCallback(() => {
+    if (!session) {
+      setWishlistCount(0);
+      setCartCount(0);
+      return;
+    }
+
+    Promise.all([
+      fetch('/api/wishlist').then((r) => r.json()),
+      fetch('/api/cart').then((r) => r.json()),
+    ])
+      .then(([wishlistData, cartData]) => {
+        setWishlistCount((wishlistData.data || []).length);
+        const items = cartData.data?.items || [];
+        setCartCount(items.reduce((s: number, i: any) => s + i.quantity, 0));
+      })
+      .catch(() => {});
+  }, [session]);
+
   useEffect(() => {
     fetch('/api/categories')
       .then((r) => r.json())
@@ -29,19 +48,17 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (!session) return;
-    fetch('/api/wishlist')
-      .then((r) => r.json())
-      .then((data) => setWishlistCount((data.data || []).length))
-      .catch(() => {});
-    fetch('/api/cart')
-      .then((r) => r.json())
-      .then((data) => {
-        const items = data.data?.items || [];
-        setCartCount(items.reduce((s: number, i: any) => s + i.quantity, 0));
-      })
-      .catch(() => {});
-  }, [session]);
+    refreshCounts();
+
+    const onCountsChanged = () => refreshCounts();
+    window.addEventListener('wishlist-updated', onCountsChanged);
+    window.addEventListener('cart-updated', onCountsChanged);
+
+    return () => {
+      window.removeEventListener('wishlist-updated', onCountsChanged);
+      window.removeEventListener('cart-updated', onCountsChanged);
+    };
+  }, [refreshCounts]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

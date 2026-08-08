@@ -2,15 +2,18 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import ProductCard from '@/components/product/ProductCard';
 import { ProductType } from '@/types';
+import { getCategoryIcon } from '@/lib/category-icons';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<ProductType[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
   const category = searchParams.get('category') || '';
@@ -29,15 +32,26 @@ function ProductsContent() {
     params.set('limit', '12');
 
     setLoading(true);
+    setError('');
     fetch(`/api/products?${params}`)
-      .then((r) => r.json())
-      .then(({ data, pagination: p }) => { setProducts(data || []); setPagination(p || { page: 1, pages: 1, total: 0 }); })
-      .catch(() => {})
+      .then(async (r) => {
+        const payload = await r.json();
+        if (!r.ok) throw new Error(payload.error || 'Failed to load products');
+        return payload;
+      })
+      .then(({ data, pagination: p }) => {
+        setProducts(data || []);
+        setPagination(p || { page: 1, pages: 1, total: 0 });
+      })
+      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, [category, search, bestseller, sort, page]);
 
   useEffect(() => {
-    fetch('/api/categories').then((r) => r.json()).then(({ data }) => setCategories(data || [])).catch(() => {});
+    fetch('/api/categories')
+      .then((r) => r.json())
+      .then(({ data }) => setCategories(data || []))
+      .catch(() => {});
   }, []);
 
   const buildUrl = (overrides: Record<string, string>) => {
@@ -57,13 +71,17 @@ function ProductsContent() {
           <div>
             <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wider">Categories</h3>
             <div className="space-y-1">
-              <a href="/products" className={`block px-3 py-2 text-sm rounded-xl transition-all ${!category ? 'bg-brand-600/20 text-brand-400 font-medium' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
+              <Link href="/products" className={`block px-3 py-2 text-sm rounded-xl transition-all ${!category ? 'bg-brand-600/20 text-brand-400 font-medium' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
                 All Products
-              </a>
+              </Link>
               {categories.map((cat: any) => (
-                <a key={cat.id} href={`/products?category=${cat.id}`} className={`block px-3 py-2 text-sm rounded-xl transition-all ${category === cat.id ? 'bg-brand-600/20 text-brand-400 font-medium' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
-                  {cat.icon} {cat.name}
-                </a>
+                <Link key={cat.id || cat.slug} href={`/products?category=${cat.slug}`} className={`flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-all ${category === cat.slug ? 'bg-brand-600/20 text-brand-400 font-medium' : 'text-dark-400 hover:text-white hover:bg-white/5'}`}>
+                  {(() => {
+                    const Icon = getCategoryIcon(cat);
+                    return <Icon size={14} className="shrink-0" />;
+                  })()}
+                  <span>{cat.name}</span>
+                </Link>
               ))}
             </div>
           </div>
@@ -95,7 +113,12 @@ function ProductsContent() {
           <p className="text-sm text-dark-400 mt-1">{pagination.total} products found</p>
         </div>
 
-        {loading ? (
+        {error ? (
+          <div className="text-center py-20 bg-dark-800/30 border border-red-500/20 rounded-2xl">
+            <p className="text-red-400 text-lg mb-2">Failed to load products</p>
+            <p className="text-dark-400 text-sm">{error}</p>
+          </div>
+        ) : loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-dark-800/40 rounded-2xl overflow-hidden animate-pulse">

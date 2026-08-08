@@ -14,10 +14,21 @@ export default function CartPage() {
   const router = useRouter();
   const [cart, setCart] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!session) return;
-    fetch('/api/cart').then((r) => r.json()).then(({ data }) => setCart(data)).catch(() => {}).finally(() => setLoading(false));
+    setLoading(true);
+    setError('');
+    fetch('/api/cart')
+      .then(async (r) => {
+        const payload = await r.json();
+        if (!r.ok) throw new Error(payload.error || 'Failed to fetch cart');
+        return payload;
+      })
+      .then(({ data }) => setCart(data))
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [session]);
 
   const updateQuantity = async (itemId: string, quantity: number) => {
@@ -26,6 +37,7 @@ export default function CartPage() {
       if (!res.ok) throw new Error('Failed to update quantity');
       const { data } = await res.json();
       setCart(data);
+      window.dispatchEvent(new Event('cart-updated'));
     } catch {
       toast.error('Failed to update quantity');
     }
@@ -37,6 +49,7 @@ export default function CartPage() {
       if (!res.ok) throw new Error('Failed to remove item');
       const { data } = await res.json();
       setCart(data);
+      window.dispatchEvent(new Event('cart-updated'));
       toast.success('Removed from cart');
     } catch {
       toast.error('Failed to remove item');
@@ -59,6 +72,18 @@ export default function CartPage() {
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-dark-800 rounded-xl animate-pulse" />)}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <h2 className="text-xl font-bold text-white mb-2">Cart unavailable</h2>
+        <p className="text-dark-400 mb-6">{error}</p>
+        <button onClick={() => router.refresh()} className="px-6 py-2.5 bg-brand-600 text-white rounded-xl font-medium">
+          Retry
+        </button>
       </div>
     );
   }

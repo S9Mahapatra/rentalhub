@@ -10,10 +10,21 @@ export default function WishlistPage() {
   const { data: session } = useSession();
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!session) return;
-    fetch('/api/wishlist').then((r) => r.json()).then(({ data }) => setProducts(data || [])).catch(() => {}).finally(() => setLoading(false));
+    setLoading(true);
+    setError('');
+    fetch('/api/wishlist')
+      .then(async (r) => {
+        const payload = await r.json();
+        if (!r.ok) throw new Error(payload.error || 'Failed to load wishlist');
+        return payload;
+      })
+      .then(({ data }) => setProducts(data || []))
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [session]);
 
   if (!session) {
@@ -36,6 +47,18 @@ export default function WishlistPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <h2 className="text-xl font-bold text-white mb-2">Wishlist unavailable</h2>
+        <p className="text-dark-400 mb-6">{error}</p>
+        <button onClick={() => window.location.reload()} className="px-6 py-2.5 bg-brand-600 text-white rounded-xl font-medium">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   if (products.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center">
@@ -54,7 +77,13 @@ export default function WishlistPage() {
       <h1 className="text-2xl font-bold text-white mb-6">My Wishlist ({products.length})</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {products.map((product, i) => (
-          <ProductCard key={product.id} product={product as any} index={i} />
+          <ProductCard
+            key={product.id}
+            product={product as any}
+            index={i}
+            wishlistIds={products.map((entry) => entry.id)}
+            onWishlistToggle={(productId) => setProducts((prev) => prev.filter((entry) => entry.id !== productId))}
+          />
         ))}
       </div>
     </div>

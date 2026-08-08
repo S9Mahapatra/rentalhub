@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
 import Cart from '@/models/Cart';
-import Category from '@/models/Category';
+import Product from '@/models/Product';
+import { getProductAvailability } from '@/lib/rental-service';
+import { cartUpdateSchema } from '@/lib/validation';
 import '@/models/Category';
 
 const formatCart = (cartDoc: any) => {
@@ -32,7 +34,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { quantity } = await req.json();
+    const body = await req.json();
+    const parsed = cartUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid quantity' }, { status: 400 });
+    }
+
+    const { quantity } = parsed.data;
 
     await connectToDatabase();
 
@@ -41,6 +49,30 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const itemIndex = cart.items.findIndex((item: any) => item._id && item._id.toString() === id);
     if (itemIndex === -1) return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
+
+    const item = cart.items[itemIndex];
+    const product = await Product.findById(item.product);
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    const availability = await getProductAvailability({
+      productId: product._id.toString(),
+      rentalStart: item.rentalStart,
+      rentalEnd: item.rentalEnd,
+      quantity,
+    });
+
+    if (!availability.ok) {
+      return NextResponse.json({ error: availability.error }, { status: availability.status });
+    }
+
+    if (!availability.data.isAvailable) {
+      return NextResponse.json(
+        { error: `Only ${availability.data.availableQuantity} units are available for these dates` },
+        { status: 400 }
+      );
+    }
 
     cart.items[itemIndex].quantity = quantity;
     cart.items[itemIndex].totalPrice = cart.items[itemIndex].pricePerDay * cart.items[itemIndex].rentalDays * quantity;

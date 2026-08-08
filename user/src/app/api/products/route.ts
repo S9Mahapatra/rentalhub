@@ -4,13 +4,12 @@ export const dynamic = 'force-dynamic';
 import connectToDatabase from '@/lib/mongodb';
 import Product from '@/models/Product';
 import Category from '@/models/Category';
+import { getProductAvailability } from '@/lib/rental-service';
+import { productAvailabilityQuerySchema } from '@/lib/validation';
 
 export async function GET(req: Request) {
   try {
     await connectToDatabase();
-    
-    // Ensure Category model is registered for population
-    if (!Category) console.log('Category model loaded');
 
     const { searchParams } = new URL(req.url);
     const categorySlug = searchParams.get('category');
@@ -20,6 +19,14 @@ export async function GET(req: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '12');
     const skip = (page - 1) * limit;
+    const availabilityQuery = productAvailabilityQuerySchema.safeParse({
+      rentalStart: searchParams.get('rentalStart') || undefined,
+      rentalEnd: searchParams.get('rentalEnd') || undefined,
+      quantity: searchParams.get('quantity') || undefined,
+    });
+    const rentalStart = availabilityQuery.success ? availabilityQuery.data.rentalStart : undefined;
+    const rentalEnd = availabilityQuery.success ? availabilityQuery.data.rentalEnd : undefined;
+    const rentalQuantity = availabilityQuery.success ? availabilityQuery.data.quantity || 1 : 1;
 
     const where: any = { isActive: true };
 
@@ -63,14 +70,39 @@ export async function GET(req: Request) {
     ]);
 
     // Map _id to id for the frontend
-    const mappedProducts = products.map(p => {
+    const mappedProducts = await Promise.all(products.map(async (p) => {
       const doc = p.toJSON() as any;
       doc.id = doc._id.toString();
       if (doc.category && (doc.category as any)._id) {
         (doc.category as any).id = (doc.category as any)._id.toString();
       }
+      if (rentalStart && rentalEnd) {
+        const availability = await getProductAvailability({
+          productId: doc.id,
+          rentalStart,
+          rentalEnd,
+          quantity: rentalQuantity,
+        });
+        if (availability.ok) {
+          doc.availability = {
+            availableQuantity: availability.data.availableQuantity,
+            requestedQuantity: availability.data.requestedQuantity,
+            isAvailable: availability.data.isAvailable,
+            reservedQuantity: availability.data.reservedQuantity,
+            conflictingBookings: availability.data.conflictingBookings,
+          };
+        }
+      } else {
+        doc.availability = {
+          availableQuantity: doc.availableStock ?? doc.totalStock ?? 0,
+          requestedQuantity: 1,
+          isAvailable: (doc.availableStock ?? doc.totalStock ?? 0) > 0,
+          reservedQuantity: 0,
+          conflictingBookings: [],
+        };
+      }
       return doc;
-    });
+    }));
 
     return NextResponse.json({
       success: true,

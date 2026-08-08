@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
-import { calculateRentalPrice } from '@/lib/utils';
+import { calculateRentalBreakdown } from '@/lib/utils';
 import Cart from '@/models/Cart';
 import Product from '@/models/Product';
-import Booking from '@/models/Booking';
-import Category from '@/models/Category';
+import { getProductAvailability } from '@/lib/rental-service';
+import { cartItemSchema } from '@/lib/validation';
 import '@/models/Category';
 
 const formatCart = (cartDoc: any) => {
@@ -63,55 +63,82 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { productId, quantity = 1, rentalStart, rentalEnd } = await req.json();
+    const body = await req.json();
+    const parsed = cartItemSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid cart item' }, { status: 400 });
+    }
+
+    const { productId, quantity, rentalStart, rentalEnd } = parsed.data;
 
     await connectToDatabase();
 
     const product = await Product.findById(productId);
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
-    const start = new Date(rentalStart);
-    const end = new Date(rentalEnd);
-    const rentalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (rentalDays < product.minRentalDays) {
-      return NextResponse.json({ error: `Minimum rental period is ${product.minRentalDays} days` }, { status: 400 });
-    }
-
-    const overlappingBookings = await Booking.countDocuments({
-      product: productId,
-      status: { $in: ['confirmed', 'active', 'preparing', 'out_for_delivery', 'delivered'] },
-      rentalStart: { $lte: end },
-      rentalEnd: { $gte: start },
+    const availability = await getProductAvailability({
+      productId,
+      rentalStart,
+      rentalEnd,
+      quantity,
     });
 
-    const available = product.availableStock - overlappingBookings;
-    if (quantity > available) {
-      return NextResponse.json({ error: `Only ${available} available for selected dates` }, { status: 400 });
+    if (!availability.ok) {
+      return NextResponse.json({ error: availability.error }, { status: availability.status });
     }
 
-    const pricePerDay = calculateRentalPrice(product.dailyPrice, product.weeklyPrice || null, product.monthlyPrice || null, rentalDays);
-    const totalPrice = Math.round(pricePerDay * rentalDays * quantity);
+    if (!availability.data.isAvailable) {
+      return NextResponse.json(
+        { error: `Only ${availability.data.availableQuantity} units are available for the selected rental period` },
+        { status: 400 }
+      );
+    }
+
+    const breakdown = calculateRentalBreakdown({
+      dailyPrice: product.dailyPrice,
+      weeklyPrice: product.weeklyPrice || null,
+      monthlyPrice: product.monthlyPrice || null,
+      rentalStartAt: rentalStart,
+      expectedReturnAt: rentalEnd,
+      quantity,
+    });
+
+    if (breakdown.billingDays < product.minRentalDays) {
+      return NextResponse.json({ error: `Minimum rental period is ${product.minRentalDays} days` }, { status: 400 });
+    }
+    const pricePerDay = breakdown.pricePerDay;
+    const totalPrice = breakdown.rentalAmount;
 
     let cart = await Cart.findOne({ user: user.id });
     if (!cart) cart = await Cart.create({ user: user.id, items: [] });
 
     const existingItemIndex = cart.items.findIndex((item: any) => 
       item.product.toString() === productId && 
-      new Date(item.rentalStart).getTime() === start.getTime() && 
-      new Date(item.rentalEnd).getTime() === end.getTime()
+      new Date(item.rentalStart).getTime() === new Date(rentalStart).getTime() && 
+      new Date(item.rentalEnd).getTime() === new Date(rentalEnd).getTime()
     );
 
+    const finalQuantity = existingItemIndex >= 0
+      ? cart.items[existingItemIndex].quantity + quantity
+      : quantity;
+
+    if (finalQuantity > availability.data.availableQuantity) {
+      return NextResponse.json(
+        { error: `Only ${availability.data.availableQuantity} units are available for the selected rental period` },
+        { status: 400 }
+      );
+    }
+
     if (existingItemIndex >= 0) {
-      cart.items[existingItemIndex].quantity += quantity;
-      cart.items[existingItemIndex].totalPrice = pricePerDay * rentalDays * cart.items[existingItemIndex].quantity;
+      cart.items[existingItemIndex].quantity = finalQuantity;
+      cart.items[existingItemIndex].totalPrice = pricePerDay * breakdown.billingDays * finalQuantity;
     } else {
       cart.items.push({
         product: productId as any,
         quantity,
-        rentalStart: start,
-        rentalEnd: end,
-        rentalDays,
+        rentalStart: new Date(rentalStart),
+        rentalEnd: new Date(rentalEnd),
+        rentalDays: breakdown.billingDays,
         pricePerDay,
         totalPrice
       });

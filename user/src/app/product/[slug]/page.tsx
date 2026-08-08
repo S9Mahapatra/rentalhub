@@ -7,7 +7,12 @@ import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { ProductType } from '@/types';
-import { formatCurrency, calculateRentalPrice } from '@/lib/utils';
+import { calculateRentalBreakdown, formatCurrency } from '@/lib/utils';
+
+function formatDateTimeLocal(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -20,29 +25,65 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [adding, setAdding] = useState(false);
+  const [availability, setAvailability] = useState<any>(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
 
   useEffect(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 3);
-    setRentalStart(tomorrow.toISOString().split('T')[0]);
-    setRentalEnd(dayAfter.toISOString().split('T')[0]);
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    start.setHours(10, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 2);
+    end.setHours(18, 0, 0, 0);
+    setRentalStart(formatDateTimeLocal(start));
+    setRentalEnd(formatDateTimeLocal(end));
   }, []);
 
   useEffect(() => {
     if (params.slug) {
       fetch(`/api/products/${params.slug}`)
         .then((r) => r.json())
-        .then(({ data }) => setProduct(data))
+        .then(({ data }) => {
+          setProduct(data);
+          setAvailability(data?.availability || null);
+          if (data?.availability?.availableQuantity) {
+            setQuantity((prev) => Math.min(prev, data.availability.availableQuantity));
+          }
+        })
         .catch(() => {})
         .finally(() => setLoading(false));
     }
   }, [params.slug]);
 
+  useEffect(() => {
+    if (!params.slug || !rentalStart || !rentalEnd) return;
+
+    const controller = new AbortController();
+    setAvailabilityLoading(true);
+
+    fetch(`/api/products/${params.slug}?rentalStart=${encodeURIComponent(rentalStart)}&rentalEnd=${encodeURIComponent(rentalEnd)}&quantity=${quantity}`, {
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then(({ data }) => {
+        setAvailability(data?.availability || null);
+        if (data?.availability?.availableQuantity) {
+          setQuantity((prev) => Math.min(prev, data.availability.availableQuantity));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setAvailabilityLoading(false));
+
+    return () => controller.abort();
+  }, [params.slug, rentalStart, rentalEnd, quantity]);
+
   const handleAddToCart = async () => {
     if (!session) { toast.error('Please sign in'); router.push('/auth/login'); return; }
     if (!rentalStart || !rentalEnd) { toast.error('Select rental dates'); return; }
+    if (!availability?.isAvailable) {
+      toast.error('Selected rental period is unavailable');
+      return;
+    }
 
     setAdding(true);
     try {
@@ -61,13 +102,22 @@ export default function ProductDetailPage() {
     }
   };
 
-  const rentalDays = rentalStart && rentalEnd
-    ? Math.max(1, Math.ceil((new Date(rentalEnd).getTime() - new Date(rentalStart).getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
+  const pricing = product && rentalStart && rentalEnd
+    ? calculateRentalBreakdown({
+        dailyPrice: product.dailyPrice,
+        weeklyPrice: product.weeklyPrice,
+        monthlyPrice: product.monthlyPrice,
+        rentalStartAt: rentalStart,
+        expectedReturnAt: rentalEnd,
+        quantity,
+      })
+    : null;
 
-  const pricePerDay = product ? calculateRentalPrice(product.dailyPrice, product.weeklyPrice, product.monthlyPrice, rentalDays) : 0;
-  const totalRental = Math.round(pricePerDay * rentalDays * quantity);
+  const rentalDays = pricing?.billingDays || 0;
+  const pricePerDay = pricing?.pricePerDay || 0;
+  const totalRental = pricing?.rentalAmount || 0;
   const securityDeposit = product ? product.securityDeposit * quantity : 0;
+  const availableQuantity = availability?.availableQuantity ?? product?.availableStock ?? 0;
 
   if (loading) {
     return (
@@ -158,12 +208,24 @@ export default function ProductDetailPage() {
           <div className="space-y-4 mb-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-dark-400 mb-1.5 block font-medium">Start Date</label>
-                <input type="date" value={rentalStart} min={new Date().toISOString().split('T')[0]} onChange={(e) => setRentalStart(e.target.value)} className="w-full bg-dark-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 transition-all" />
+                <label className="text-xs text-dark-400 mb-1.5 block font-medium">Start Date &amp; Time</label>
+                <input
+                  type="datetime-local"
+                  value={rentalStart}
+                  min={formatDateTimeLocal(new Date())}
+                  onChange={(e) => setRentalStart(e.target.value)}
+                  className="w-full bg-dark-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 transition-all"
+                />
               </div>
               <div>
-                <label className="text-xs text-dark-400 mb-1.5 block font-medium">End Date</label>
-                <input type="date" value={rentalEnd} min={rentalStart} onChange={(e) => setRentalEnd(e.target.value)} className="w-full bg-dark-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 transition-all" />
+                <label className="text-xs text-dark-400 mb-1.5 block font-medium">End Date &amp; Time</label>
+                <input
+                  type="datetime-local"
+                  value={rentalEnd}
+                  min={rentalStart || formatDateTimeLocal(new Date())}
+                  onChange={(e) => setRentalEnd(e.target.value)}
+                  className="w-full bg-dark-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 transition-all"
+                />
               </div>
             </div>
             <div>
@@ -171,12 +233,17 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-3">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 bg-dark-800 border border-white/10 rounded-xl text-white flex items-center justify-center hover:bg-dark-700 transition-colors">-</button>
                 <span className="text-white font-semibold w-8 text-center">{quantity}</span>
-                <button onClick={() => setQuantity(Math.min(product.availableStock, quantity + 1))} className="w-10 h-10 bg-dark-800 border border-white/10 rounded-xl text-white flex items-center justify-center hover:bg-dark-700 transition-colors">+</button>
+                <button
+                  onClick={() => setQuantity(Math.min(availableQuantity || product.availableStock || 1, quantity + 1))}
+                  className="w-10 h-10 bg-dark-800 border border-white/10 rounded-xl text-white flex items-center justify-center hover:bg-dark-700 transition-colors"
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
 
-          {rentalDays > 0 && (
+          {pricing && (
             <div className="bg-dark-800/50 border border-white/5 rounded-2xl p-5 mb-6">
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-dark-400">Rental ({rentalDays} days × {quantity})</span>
@@ -193,16 +260,30 @@ export default function ProductDetailPage() {
             </div>
           )}
 
+          <div className="flex items-center justify-between text-sm mb-4">
+            <span className="text-dark-400">
+              Availability
+            </span>
+            <span className={availability?.isAvailable ? 'text-emerald-400' : 'text-red-400'}>
+              {availabilityLoading ? 'Checking…' : availability?.isAvailable ? `${availableQuantity} available` : 'Unavailable'}
+            </span>
+          </div>
+
           <div className="flex gap-3">
-            <button onClick={handleAddToCart} disabled={adding} className="flex-1 py-3.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-brand-600/20 hover:shadow-brand-500/30">
+            <button onClick={handleAddToCart} disabled={adding || !availability?.isAvailable} className="flex-1 py-3.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-brand-600/20 hover:shadow-brand-500/30">
               {adding ? 'Adding...' : 'Add to Cart'}
             </button>
           </div>
 
-          {product.availableStock <= 5 && (
+          {availableQuantity <= 5 && availableQuantity > 0 && (
             <p className="text-sm text-amber-400 mt-3 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-              Only {product.availableStock} units available
+              Only {availableQuantity} units available
+            </p>
+          )}
+          {availability && !availability.isAvailable && (
+            <p className="text-sm text-red-400 mt-3">
+              Selected rental period overlaps with an existing booking.
             </p>
           )}
         </motion.div>

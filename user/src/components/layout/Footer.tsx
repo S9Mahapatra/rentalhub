@@ -9,9 +9,11 @@ export default function Footer() {
           <span className="text-dark-600">|</span>
           <Link href="/bookings" className="hover:text-white transition-colors">My Bookings</Link>
           <span className="text-dark-600">|</span>
-          <Link href="/products" className="hover:text-white transition-colors">All Products</Link>
+          <Link href="/wishlist" className="hover:text-white transition-colors">Wishlist</Link>
           <span className="text-dark-600">|</span>
           <Link href="/profile" className="hover:text-white transition-colors">My Profile</Link>
+          <span className="text-dark-600">|</span>
+          <Link href="/cart" className="hover:text-white transition-colors">Rent Bag</Link>
           <span className="text-dark-600">|</span>
           <Link href="/auth/register" className="hover:text-white transition-colors">Join RentalHub</Link>
         </div>

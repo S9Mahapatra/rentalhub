@@ -1,13 +1,16 @@
 import mongoose from 'mongoose';
 
-declare global {
-  var mongoose: {
-    conn: any;
-    promise: Promise<any> | null;
-  };
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
 }
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+declare global {
+  // eslint-disable-next-line no-var
+  var mongooseCache: MongooseCache | undefined;
+}
+
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -15,10 +18,10 @@ if (!MONGODB_URI) {
   );
 }
 
-let cached = global.mongoose;
+let cached: MongooseCache = global.mongooseCache || { conn: null, promise: null };
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+if (!global.mongooseCache) {
+  global.mongooseCache = cached;
 }
 
 async function connectToDatabase() {
@@ -31,9 +34,9 @@ async function connectToDatabase() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
       console.log('Successfully connected to MongoDB.');
-      return mongoose;
+      return mongooseInstance;
     });
   }
 
