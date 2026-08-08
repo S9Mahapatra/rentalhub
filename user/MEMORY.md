@@ -13,7 +13,8 @@ Completed:
 - Mongoose schemas for all models (User, Product, Category, Cart, Wishlist, Booking, Order)
 - NextAuth.js authentication with credentials provider
 - All API routes (products, categories, cart, wishlist, bookings, orders, users)
-- Dark cinematic UI with Tailwind CSS and Framer Motion animations
+- High-contrast, premium Light UI theme (white backgrounds, black elements/buttons) with Emerald Green accents and soft rounded borders
+- Tailwind CSS and Framer Motion for styling and micro-animations
 - All pages: Home, Products, Product Detail, Cart, Wishlist, Bookings, Checkout, Profile, Auth
 - Business logic: availability checking, rental pricing, late fees, security deposits
 - Seed script with sample data
@@ -51,3 +52,12 @@ Date: 2026-08-08
 Decision: NextAuth.js with JWT strategy
 Reason: Simple setup, secure, supports credentials provider
 Date: 2026-08-08
+
+## Design System & UI Guidelines
+- **Theme**: Premium Light Theme
+- **Color Palette**: 
+  - Backgrounds: White (`bg-white`, `bg-[#F7F7F9]`)
+  - Typography/Buttons: High contrast black (`text-neutral-950`, `bg-neutral-950`)
+  - Accents: Emerald Green (`emerald-50`, `emerald-500`, `emerald-600`) for availability badges, active states, and highlights.
+- **Shapes**: Pill-shaped buttons (`rounded-full`), soft rounded corners for cards (`rounded-[20px]`, `rounded-[11px]`).
+- **Strict Rule**: Every new page, component, and button must perfectly adhere to this aesthetic. No deviations or dark-mode overrides without explicit permission.
