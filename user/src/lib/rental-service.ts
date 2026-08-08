@@ -625,18 +625,32 @@ export async function createRentalCheckoutOrder(params: {
 
 export async function updateBookingLifecycle(params: {
   bookingId: string;
-  userId: string;
+  /**
+   * Scopes the booking lookup to one customer. Omit for admin-initiated
+   * actions, which operate on any booking.
+   */
+  userId?: string;
   action: 'cancel' | 'confirm_pickup' | 'return';
   returnCondition?: string;
   damageNotes?: string;
   missingAccessories?: string[];
+  /**
+   * Admin-only settlement overrides (return action).
+   * lateFeeOverride replaces the auto-calculated fee — pass 0 to waive it.
+   * damageCharge is deducted from the deposit on top of the late fee.
+   */
+  lateFeeOverride?: number;
+  damageCharge?: number;
 }) {
   await connectToDatabase();
   const session = await mongoose.startSession();
 
   try {
     const result = await session.withTransaction(async () => {
-      const booking = await Booking.findOne({ _id: params.bookingId, user: params.userId })
+      const bookingQuery: Record<string, unknown> = { _id: params.bookingId };
+      if (params.userId) bookingQuery.user = params.userId;
+
+      const booking = await Booking.findOne(bookingQuery)
         .populate({ path: 'product', populate: { path: 'category', select: 'name slug icon' } })
         .session(session);
 
@@ -701,7 +715,7 @@ export async function updateBookingLifecycle(params: {
         const refundPayments = await Payment.create(
           [
             {
-              user: params.userId,
+              user: booking.user,
               order: booking.order,
               booking: booking._id,
               bookingId: booking._id,
@@ -716,7 +730,7 @@ export async function updateBookingLifecycle(params: {
               processedAt: new Date(),
             },
             {
-              user: params.userId,
+              user: booking.user,
               order: booking.order,
               booking: booking._id,
               bookingId: booking._id,
@@ -796,7 +810,15 @@ export async function updateBookingLifecycle(params: {
           expectedReturnAt: booking.expectedReturnAt,
           actualReturnAt: now,
         });
-        const deductionAmount = lateFee.totalLateFee;
+
+        // Admin may waive or adjust the auto-calculated fee (0 = waived).
+        const effectiveLateFee =
+          params.lateFeeOverride !== undefined
+            ? Math.max(0, Math.round(params.lateFeeOverride))
+            : lateFee.totalLateFee;
+        const damageCharge = Math.max(0, Math.round(params.damageCharge || 0));
+
+        const deductionAmount = effectiveLateFee + damageCharge;
         const settlement = calculateDepositSettlement({
           depositAmount: booking.securityDeposit,
           deductedAmount: deductionAmount,
@@ -815,13 +837,27 @@ export async function updateBookingLifecycle(params: {
         booking.lateDurationMinutes = lateFee.lateMinutes;
         booking.lateDurationHours = lateFee.lateHours;
         booking.lateDurationDays = lateFee.lateDays;
-        booking.lateFees = deductionAmount;
+        booking.lateFees = effectiveLateFee;
+        booking.damageCharge = damageCharge;
         booking.depositDeductedAmount = settlement.deductedAmount;
         booking.depositRefundAmount = settlement.refundedAmount;
         booking.depositRefunded = settlement.refundedAmount > 0;
         booking.balanceDue = settlement.balanceDue;
         booking.refundDate = settlement.refundedAmount > 0 ? now : undefined;
-        booking.deductionReason = deductionAmount > 0 ? (lateFee.rateType === 'hourly' ? 'Late return charged hourly' : 'Late return charged daily') : undefined;
+        const deductionReasons: string[] = [];
+        if (effectiveLateFee > 0) {
+          deductionReasons.push(
+            lateFee.rateType === 'hourly'
+              ? `Late return charged hourly (${effectiveLateFee})`
+              : `Late return charged daily (${effectiveLateFee})`
+          );
+        }
+        if (damageCharge > 0) {
+          deductionReasons.push(
+            `${params.returnCondition === 'missing_accessories' ? 'Missing accessories' : 'Damage'} charge (${damageCharge})`
+          );
+        }
+        booking.deductionReason = deductionReasons.length ? deductionReasons.join(' + ') : undefined;
         booking.depositRefundStatus = settlement.deductedAmount > 0 && settlement.refundedAmount > 0 ? 'partially_refunded' : settlement.deductedAmount > 0 ? 'deducted' : 'refunded';
         booking.depositPaymentStatus = settlement.deductedAmount > 0 && settlement.refundedAmount > 0 ? 'partially_refunded' : settlement.deductedAmount > 0 ? 'deducted' : 'refunded';
         booking.depositHeldStatus = 'released';
@@ -882,7 +918,7 @@ export async function updateBookingLifecycle(params: {
         const paymentRecords = [];
         if (settlement.deductedAmount > 0) {
           paymentRecords.push({
-            user: params.userId,
+            user: booking.user,
             order: booking.order,
             booking: booking._id,
             bookingId: booking._id,
@@ -899,7 +935,7 @@ export async function updateBookingLifecycle(params: {
         }
         if (settlement.refundedAmount > 0) {
           paymentRecords.push({
-            user: params.userId,
+            user: booking.user,
             order: booking.order,
             booking: booking._id,
             bookingId: booking._id,
@@ -916,7 +952,7 @@ export async function updateBookingLifecycle(params: {
         }
         if (settlement.balanceDue > 0) {
           paymentRecords.push({
-            user: params.userId,
+            user: booking.user,
             order: booking.order,
             booking: booking._id,
             bookingId: booking._id,
