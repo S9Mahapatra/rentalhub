@@ -2,137 +2,67 @@
 
 ## 1. Architecture Overview
 
-*Architecture is currently in the planning phase. No components have been implemented yet in the codebase. Below is the planned architecture flow based on requirements.*
-
 ```mermaid
 flowchart TD
     User[Portal User]
-    Frontend[RentalHub Frontend (Planned)]
-    Backend[RentalHub Backend API (Planned)]
-    Auth[Authentication Service (Planned)]
-    DB[(Database - Planned)]
-    Payment[Payment Service (Planned)]
+    Frontend[Next.js Frontend :3000]
+    Backend[Express API :5000]
+    DB[(MongoDB)]
     
     User --> Frontend
-    Frontend --> Backend
-    Frontend --> Auth
+    Frontend -->|API Calls| Backend
     Backend --> DB
-    Backend --> Payment
 ```
 
 ## 2. Frontend Architecture
 
-Status: Planned. No frontend framework, routing, or state management has been implemented yet.
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State**: React Context (Auth, Cart, Wishlist)
+- **Routing**: File-based (App Router)
+- **Pages**: Home, Products, Product Detail, Cart, Wishlist, Bookings, Checkout, Auth
 
 ## 3. Backend Architecture
 
-Status: Planned. No server framework, controllers, or database access layer has been implemented yet.
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: MongoDB with Mongoose ODM
+- **Auth**: JWT with HTTP-only cookies
+- **Structure**: Controllers, Routes, Models, Middleware
 
 ## 4. Database Architecture
 
-Status: Planned. No schema or entities currently exist in the codebase.
+Models: User, Category, Product, Cart, Wishlist, Booking, Order
 
 ## 5. Authentication Flow
 
-Status: Planned.
-Anticipated Flow:
-```text
-User
- ↓
-Login/Register
- ↓
-Authentication
- ↓
-Session/Token
- ↓
-Protected Routes
- ↓
-User Dashboard
+```
+User -> Login/Register -> JWT Token -> Stored in localStorage/Cookie
+API Calls -> Bearer Token Header -> Middleware Verification -> Protected Routes
 ```
 
 ## 6. Rental Lifecycle
 
-Business Workflow:
-```text
-Browse
- ↓
-Select Product
- ↓
-Select Rental Period
- ↓
-Cart
- ↓
-Delivery / Store Pickup
- ↓
-Payment + Security Deposit
- ↓
-Confirmed Rental
- ↓
-Pickup/Delivery
- ↓
-Return
- ↓
-Inspection
- ↓
-Deposit Refund
-       OR
-Late Fee Deduction
+```
+Browse -> Select Product -> Choose Dates -> Add to Cart -> Checkout
+-> Select Delivery/Pickup -> Payment + Deposit -> Confirmed
+-> Delivery/Pickup -> Active Rental -> Return
+-> Inspection -> Deposit Refund / Late Fee Deduction
 ```
 
 ## 7. API Architecture
 
-Status: Planned. No API endpoints are currently implemented.
+RESTful API with:
+- Public routes: Products, Categories
+- Protected routes: Cart, Wishlist, Bookings, Orders, Payments
+- Rate limiting: 100 requests per 15 minutes
 
-## 8. Security Architecture
+## 8. Security
 
-### Implemented
-* None.
-
-### Planned
-* Authentication & Authorization
-* Password security (hashing/salting)
-* Input validation on client and server
-* Rate limiting
-* CORS configuration
-* Secure cookies/tokens
-* Environment variable protection for secrets
-* Payment security compliance
-
-## 9. Error Handling
-
-Status: Planned.
-Anticipated Flow:
-```text
-Frontend Request
-      ↓
-Backend API
-      ↓
-Validation
-      ↓
-Business Logic
-      ↓
-Database
-      ↓
-Response
-      ↓
-Frontend Error/Success State
-```
-
-## 10. Deployment Architecture
-
-Status: Planned.
-
-## 11. Scalability
-
-Future scalability considerations:
-* **Database scaling**: Connection pooling and potential read replicas.
-* **Caching**: Implementing Redis for frequently accessed product data.
-* **Background jobs**: Worker queues for processing invoice generation and automated late fee detection.
-* **File storage**: Cloud object storage (e.g., AWS S3) for user profile images and product photos.
-* **Horizontal scaling**: Containerization (Docker) and orchestration (Kubernetes) for handling increased traffic.
-
-## 12. Architecture Decisions
-
-| Decision | Reason | Status |
-| -------- | ------ | ------ |
-| (None yet) | - | - |
+- JWT authentication with HTTP-only cookies
+- Password hashing with bcryptjs (12 rounds)
+- CORS configuration
+- Rate limiting
+- Input validation
+- Helmet.js security headers
