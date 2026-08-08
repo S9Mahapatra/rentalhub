@@ -31,7 +31,7 @@ function ProductsContent() {
     setLoading(true);
     fetch(`/api/products?${params}`)
       .then((r) => r.json())
-      .then(({ data, pagination: p }) => { setProducts(data || []); setPagination(p); })
+      .then(({ data, pagination: p }) => { setProducts(data || []); setPagination(p || { page: 1, pages: 1, total: 0 }); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [category, search, bestseller, sort, page]);

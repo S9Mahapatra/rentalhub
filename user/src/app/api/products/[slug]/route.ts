@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import connectToDatabase from '@/lib/mongodb';
 import Product from '@/models/Product';
 import Category from '@/models/Category';
@@ -9,8 +10,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
     await connectToDatabase();
     if (!Category) console.log('Loaded Category');
 
-    const product = await Product.findOne({ slug })
-      .populate({ path: 'category', select: 'name slug icon' });
+    const isObjectId = mongoose.Types.ObjectId.isValid(slug);
+    const product = await Product.findOne(
+      isObjectId ? { $or: [{ slug }, { _id: slug }] } : { slug }
+    ).populate({ path: 'category', select: 'name slug icon' });
 
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });

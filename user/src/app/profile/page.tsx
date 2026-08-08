@@ -24,11 +24,17 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       const res = await fetch('/api/users/profile', {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, addAddress: false }),
+        body: JSON.stringify({ name, phone }),
       });
-      if (res.ok) toast.success('Profile updated');
+      if (res.ok) {
+        toast.success('Profile updated');
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update profile');
+      }
     } catch { toast.error('Failed to update'); }
     setSaving(false);
   };

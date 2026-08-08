@@ -3,14 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Video, Camera, Lightbulb, SlidersHorizontal, Briefcase, Flame, Package } from 'lucide-react';
+import { Video, Camera, Lightbulb, SlidersHorizontal, Briefcase, Flame, Package, Disc, Volume2, Zap, Aperture, Radio } from 'lucide-react';
 
 const ICON_MAP: Record<string, any> = {
+  'cameras': Camera,
   'cinema': Video,
   'mirrorless': Camera,
+  'lenses': Aperture,
   'lighting': Lightbulb,
-  'audio': SlidersHorizontal,
+  'audio': Volume2,
+  'drones': Radio,
   'kits': Briefcase,
+  'accessories': SlidersHorizontal,
+  'offers': Zap,
   'deals': Flame,
 };
 

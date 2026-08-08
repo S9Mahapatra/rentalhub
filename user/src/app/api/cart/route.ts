@@ -5,6 +5,7 @@ import { calculateRentalPrice } from '@/lib/utils';
 import Cart from '@/models/Cart';
 import Product from '@/models/Product';
 import Booking from '@/models/Booking';
+import Category from '@/models/Category';
 import '@/models/Category';
 
 const formatCart = (cartDoc: any) => {
@@ -34,7 +35,6 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     await connectToDatabase();
-    require('@/models/Category');
 
     const cart = await Cart.findOne({ user: user.id })
       .populate({
@@ -66,7 +66,6 @@ export async function POST(req: Request) {
     const { productId, quantity = 1, rentalStart, rentalEnd } = await req.json();
 
     await connectToDatabase();
-    require('@/models/Category');
 
     const product = await Product.findById(productId);
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });

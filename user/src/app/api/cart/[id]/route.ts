@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
 import Cart from '@/models/Cart';
+import Category from '@/models/Category';
 import '@/models/Category';
 
 const formatCart = (cartDoc: any) => {
@@ -34,7 +35,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { quantity } = await req.json();
 
     await connectToDatabase();
-    require('@/models/Category');
 
     const cart = await Cart.findOne({ user: user.id });
     if (!cart) return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
@@ -65,7 +65,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     await connectToDatabase();
-    require('@/models/Category');
 
     const cart = await Cart.findOne({ user: user.id });
     if (!cart) return NextResponse.json({ error: 'Cart not found' }, { status: 404 });

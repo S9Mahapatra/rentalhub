@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Star, Heart } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { ProductType } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 
@@ -14,8 +16,50 @@ interface ProductCardProps {
   onWishlistToggle?: (productId: string) => void;
 }
 
-export default function ProductCard({ product, index, wishlistIds = [], onWishlistToggle }: ProductCardProps) {
-  const isWishlisted = wishlistIds.includes(product.id);
+export default function ProductCard({ product, index, wishlistIds, onWishlistToggle }: ProductCardProps) {
+  const [isWishlisted, setIsWishlisted] = useState<boolean>(wishlistIds ? wishlistIds.includes(product.id) : false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (wishlistIds) {
+      setIsWishlisted(wishlistIds.includes(product.id));
+    }
+  }, [wishlistIds, product.id]);
+
+  const handleToggle = async () => {
+    if (onWishlistToggle) {
+      onWishlistToggle(product.id);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      if (res.status === 401) {
+        toast.error('Please sign in to add to wishlist');
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        const added = data.data.action === 'added';
+        setIsWishlisted(added);
+        toast.success(added ? 'Added to wishlist' : 'Removed from wishlist');
+      } else {
+        toast.error(data.error || 'Failed to update wishlist');
+      }
+    } catch {
+      toast.error('Failed to update wishlist');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const imageUrl = product.imageUrl || product.images?.[0] || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1000&auto=format&fit=crop';
 
   return (
@@ -73,7 +117,8 @@ export default function ProductCard({ product, index, wishlistIds = [], onWishli
             RENT NOW
           </Link>
           <button 
-            onClick={() => onWishlistToggle?.(product.id)}
+            onClick={handleToggle}
+            disabled={loading}
             className={`p-2.5 rounded-lg border transition-all ${
               isWishlisted 
                 ? 'border-red-500/50 bg-red-500/10 text-red-500' 

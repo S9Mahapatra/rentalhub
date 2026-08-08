@@ -35,28 +35,34 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { label, street, city, state, zipCode, country, isDefault } = await req.json();
+    const body = await req.json();
+    const { name, phone, label, street, city, state, zipCode, country, isDefault } = body;
 
     await connectToDatabase();
 
     const userDoc = await User.findById(user.id);
     if (!userDoc) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    if (isDefault) {
-      userDoc.addresses.forEach((a: any) => {
-        a.isDefault = false;
-      });
-    }
+    if (name !== undefined) userDoc.name = name;
+    if (phone !== undefined) userDoc.phone = phone;
 
-    userDoc.addresses.push({
-      label,
-      street,
-      city,
-      state,
-      zipCode,
-      country: country || 'India',
-      isDefault: isDefault || false
-    } as any);
+    if (street && city && state) {
+      if (isDefault) {
+        userDoc.addresses.forEach((a: any) => {
+          a.isDefault = false;
+        });
+      }
+
+      userDoc.addresses.push({
+        label: label || 'Home',
+        street,
+        city,
+        state,
+        zipCode,
+        country: country || 'India',
+        isDefault: isDefault || false
+      } as any);
+    }
 
     await userDoc.save();
 
