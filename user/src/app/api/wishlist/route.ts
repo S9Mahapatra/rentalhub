@@ -1,19 +1,39 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/utils';
+import connectToDatabase from '@/lib/mongodb';
+import { getCurrentUser } from '@/lib/server-utils';
+import User from '@/models/User';
+import mongoose from 'mongoose';
 
 export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const wishlist = await prisma.wishlist.findMany({
-      where: { userId: user.id },
-      include: { product: { include: { category: { select: { id: true, name: true, slug: true, icon: true } } } } },
+    await connectToDatabase();
+    require('@/models/Product');
+    require('@/models/Category');
+
+    const userDoc = await User.findById(user.id).populate({
+      path: 'wishlist',
+      populate: { path: 'category', select: 'name slug icon' },
     });
 
-    return NextResponse.json({ success: true, data: wishlist.map((w) => w.product) });
+    if (!userDoc) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const mappedProducts = userDoc.wishlist.map((p: any) => {
+      const doc = p.toJSON ? p.toJSON() : p;
+      if (doc._id) doc.id = doc._id.toString();
+      if (doc.category && doc.category._id) {
+        doc.category.id = doc.category._id.toString();
+      }
+      return doc;
+    });
+
+    return NextResponse.json({ success: true, data: mappedProducts });
   } catch (error) {
+    console.error('Wishlist GET Error:', error);
     return NextResponse.json({ error: 'Failed to fetch wishlist' }, { status: 500 });
   }
 }
@@ -25,18 +45,25 @@ export async function POST(req: Request) {
 
     const { productId } = await req.json();
 
-    const existing = await prisma.wishlist.findUnique({
-      where: { userId_productId: { userId: user.id, productId } },
-    });
+    await connectToDatabase();
+    
+    const userDoc = await User.findById(user.id);
+    if (!userDoc) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    if (existing) {
-      await prisma.wishlist.delete({ where: { id: existing.id } });
+    const productIdObj = new mongoose.Types.ObjectId(productId);
+    const existingIndex = userDoc.wishlist.findIndex((id) => id.equals(productIdObj));
+
+    if (existingIndex >= 0) {
+      userDoc.wishlist.splice(existingIndex, 1);
+      await userDoc.save();
       return NextResponse.json({ success: true, data: { action: 'removed' } });
     }
 
-    await prisma.wishlist.create({ data: { userId: user.id, productId } });
+    userDoc.wishlist.push(productIdObj);
+    await userDoc.save();
     return NextResponse.json({ success: true, data: { action: 'added' } });
   } catch (error) {
+    console.error('Wishlist POST Error:', error);
     return NextResponse.json({ error: 'Failed to toggle wishlist' }, { status: 500 });
   }
 }

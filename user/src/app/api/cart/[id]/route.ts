@@ -1,57 +1,83 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/utils';
+import connectToDatabase from '@/lib/mongodb';
+import { getCurrentUser } from '@/lib/server-utils';
+import Cart from '@/models/Cart';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+const formatCart = (cartDoc: any) => {
+  if (!cartDoc) return null;
+  const cart = cartDoc.toJSON();
+  cart.id = cart._id.toString();
+  cart.userId = cart.user.toString();
+  
+  cart.items = (cart.items || []).map((item: any) => {
+    item.id = item._id ? item._id.toString() : '';
+    item.cartId = cart.id;
+    if (item.product && item.product._id) {
+      item.productId = item.product._id.toString();
+      item.product.id = item.productId;
+      if (item.product.category && item.product.category._id) {
+        item.product.category.id = item.product.category._id.toString();
+      }
+    }
+    return item;
+  });
+  return cart;
+};
+
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { quantity } = await req.json();
 
-    const cart = await prisma.cart.findUnique({ where: { userId: user.id } });
+    await connectToDatabase();
+    require('@/models/Category');
+
+    const cart = await Cart.findOne({ user: user.id });
     if (!cart) return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
 
-    const item = await prisma.cartItem.findFirst({
-      where: { id: params.id, cartId: cart.id },
+    const itemIndex = cart.items.findIndex((item: any) => item._id && item._id.toString() === id);
+    if (itemIndex === -1) return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
+
+    cart.items[itemIndex].quantity = quantity;
+    cart.items[itemIndex].totalPrice = cart.items[itemIndex].pricePerDay * cart.items[itemIndex].rentalDays * quantity;
+
+    await cart.save();
+
+    const updatedCart = await Cart.findById(cart._id).populate({
+      path: 'items.product',
+      populate: { path: 'category', select: 'name slug icon' }
     });
 
-    if (!item) return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
-
-    await prisma.cartItem.update({
-      where: { id: item.id },
-      data: { quantity, totalPrice: item.pricePerDay * item.rentalDays * quantity },
-    });
-
-    const updatedCart = await prisma.cart.findUnique({
-      where: { userId: user.id },
-      include: { items: { include: { product: { include: { category: { select: { id: true, name: true, slug: true, icon: true } } } } } } },
-    });
-
-    return NextResponse.json({ success: true, data: updatedCart });
+    return NextResponse.json({ success: true, data: formatCart(updatedCart) });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update cart item' }, { status: 500 });
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const cart = await prisma.cart.findUnique({ where: { userId: user.id } });
+    await connectToDatabase();
+    require('@/models/Category');
+
+    const cart = await Cart.findOne({ user: user.id });
     if (!cart) return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
 
-    await prisma.cartItem.deleteMany({
-      where: { id: params.id, cartId: cart.id },
+    cart.items = cart.items.filter((item: any) => item._id && item._id.toString() !== id) as any;
+    await cart.save();
+
+    const updatedCart = await Cart.findById(cart._id).populate({
+      path: 'items.product',
+      populate: { path: 'category', select: 'name slug icon' }
     });
 
-    const updatedCart = await prisma.cart.findUnique({
-      where: { userId: user.id },
-      include: { items: { include: { product: { include: { category: { select: { id: true, name: true, slug: true, icon: true } } } } } } },
-    });
-
-    return NextResponse.json({ success: true, data: updatedCart });
+    return NextResponse.json({ success: true, data: formatCart(updatedCart) });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to remove cart item' }, { status: 500 });
   }

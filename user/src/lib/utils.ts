@@ -1,22 +1,4 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from './auth';
-import { prisma } from './prisma';
 
-export async function getSession() {
-  return getServerSession(authOptions);
-}
-
-export async function getCurrentUser() {
-  const session = await getSession();
-  if (!session?.user) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-    select: { id: true, name: true, email: true, phone: true, image: true, role: true },
-  });
-
-  return user;
-}
 
 export function calculateRentalPrice(
   dailyPrice: number,

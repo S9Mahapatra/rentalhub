@@ -6,7 +6,7 @@ A premium full-stack rental marketplace built with Next.js, TypeScript, Prisma, 
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
-- **Database**: PostgreSQL + Prisma ORM
+- **Database**: MongoDB + Mongoose
 - **Auth**: NextAuth.js (Credentials provider)
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
@@ -87,13 +87,12 @@ user/
 │   │   ├── product/            # ProductCard, CategoryNav, Bestsellers
 │   │   └── providers/          # SessionProvider
 │   ├── lib/                    # Utilities & config
-│   │   ├── prisma.ts           # Prisma client singleton
+│   │   ├── mongodb.ts          # MongoDB connection handler
 │   │   ├── auth.ts             # NextAuth configuration
 │   │   └── utils.ts            # Helper functions
+│   ├── models/                 # Mongoose schemas
+│   │   └── User.ts             # User model
 │   └── types/                  # TypeScript interfaces
-├── prisma/
-│   ├── schema.prisma           # Database schema
-│   └── seed.ts                 # Seed script
 ├── .env.example                # Environment variables template
 └── README.md
 ```
@@ -102,7 +101,7 @@ user/
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL (local or cloud)
+- MongoDB (local or Atlas)
 
 ### Setup
 
@@ -112,17 +111,17 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your database URL and NextAuth secret
-
-# Push database schema
-npx prisma db push
-
-# Seed sample data
-npm run db:seed
+# Edit .env with your MONGODB_URI and NextAuth secret
 
 # Start development server
 npm run dev
 ```
+
+### Testing Database Connection
+
+You can verify the database connection and User schema using the test endpoints:
+- `POST /api/users` (JSON body: `{ "name": "...", "email": "...", "password": "..." }`)
+- `GET /api/users`
 
 ### Demo Credentials
 - **Email**: demo@rentalhub.com
@@ -132,7 +131,7 @@ npm run dev
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | - |
+| `MONGODB_URI` | MongoDB connection string | - |
 | `NEXTAUTH_URL` | App URL for NextAuth | `http://localhost:3000` |
 | `NEXTAUTH_SECRET` | Secret for NextAuth JWT | - |
 | `NEXT_PUBLIC_APP_NAME` | App display name | `RentalHub` |
@@ -142,6 +141,7 @@ npm run dev
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET/POST | `/api/users` | Test MongoDB connection (list/create users) |
 | POST | `/api/auth/register` | Register new user |
 | POST | `/api/auth/[...nextauth]` | NextAuth login/logout |
 | GET | `/api/products` | List products (search, filter, sort) |
