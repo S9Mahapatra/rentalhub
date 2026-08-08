@@ -58,7 +58,7 @@ export default async function ProductDetailsPage({ params }: PageProps) {
                 alt={product.name} 
                 fill 
                 sizes="(max-width: 1024px) 100vw, 60vw"
-                className="object-contain p-8 transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
                 priority
               />
               
