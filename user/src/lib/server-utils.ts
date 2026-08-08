@@ -12,7 +12,7 @@ export async function getCurrentUser() {
   if (!session?.user) return null;
 
   await connectToDatabase();
-  const user = await User.findById((session.user as any).id).select('name email phone profileImage role');
+  const user = await User.findById(session.user.id).select('name email phone profileImage role');
 
   if (!user) return null;
 

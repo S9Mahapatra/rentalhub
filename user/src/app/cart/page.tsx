@@ -21,16 +21,26 @@ export default function CartPage() {
   }, [session]);
 
   const updateQuantity = async (itemId: string, quantity: number) => {
-    const res = await fetch(`/api/cart/${itemId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity }) });
-    const { data } = await res.json();
-    setCart(data);
+    try {
+      const res = await fetch(`/api/cart/${itemId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity }) });
+      if (!res.ok) throw new Error('Failed to update quantity');
+      const { data } = await res.json();
+      setCart(data);
+    } catch {
+      toast.error('Failed to update quantity');
+    }
   };
 
   const removeItem = async (itemId: string) => {
-    const res = await fetch(`/api/cart/${itemId}`, { method: 'DELETE' });
-    const { data } = await res.json();
-    setCart(data);
-    toast.success('Removed from cart');
+    try {
+      const res = await fetch(`/api/cart/${itemId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to remove item');
+      const { data } = await res.json();
+      setCart(data);
+      toast.success('Removed from cart');
+    } catch {
+      toast.error('Failed to remove item');
+    }
   };
 
   if (!session) {

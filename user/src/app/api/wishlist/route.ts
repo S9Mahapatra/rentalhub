@@ -3,6 +3,8 @@ import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
 import User from '@/models/User';
 import mongoose from 'mongoose';
+import '@/models/Product';
+import '@/models/Category';
 
 export async function GET() {
   try {
@@ -10,8 +12,6 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     await connectToDatabase();
-    require('@/models/Product');
-    require('@/models/Category');
 
     const userDoc = await User.findById(user.id).populate({
       path: 'wishlist',

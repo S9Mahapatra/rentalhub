@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [selectedAddress, setSelectedAddress] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     if (!session) { router.push('/auth/login'); return; }
@@ -26,8 +27,26 @@ export default function CheckoutPage() {
       setAddresses(addrData.data || []);
       const defaultAddr = (addrData.data || []).find((a: any) => a.isDefault);
       if (defaultAddr) setSelectedAddress(defaultAddr.id);
+    }).catch(() => {
+      toast.error('Failed to load checkout data');
+    }).finally(() => {
+      setInitialLoading(false);
     });
-  }, [session, router]);
+  }, [session]);
+
+  if (initialLoading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="h-8 bg-dark-800 rounded w-48 mb-6 animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            {[...Array(3)].map((_, i) => <div key={i} className="h-32 bg-dark-800 rounded-2xl animate-pulse" />)}
+          </div>
+          <div className="h-64 bg-dark-800 rounded-2xl animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   if (!cart || cart.items.length === 0) {
     return (

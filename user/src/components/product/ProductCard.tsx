@@ -5,13 +5,17 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Star, Heart } from 'lucide-react';
 import { ProductType } from '@/types';
+import { formatCurrency } from '@/lib/utils';
 
 interface ProductCardProps {
   product: ProductType;
   index: number;
+  wishlistIds?: string[];
+  onWishlistToggle?: (productId: string) => void;
 }
 
-export default function ProductCard({ product, index }: ProductCardProps) {
+export default function ProductCard({ product, index, wishlistIds = [], onWishlistToggle }: ProductCardProps) {
+  const isWishlisted = wishlistIds.includes(product.id);
   const imageUrl = product.imageUrl || product.images?.[0] || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1000&auto=format&fit=crop';
 
   return (
@@ -60,16 +64,23 @@ export default function ProductCard({ product, index }: ProductCardProps) {
 
         {/* Price */}
         <div className="text-sm text-dark-300 mb-5">
-          ${product.dailyPrice}/day {product.weeklyPrice ? `• $${product.weeklyPrice}/week` : ''}
+          {formatCurrency(product.dailyPrice)}/day {product.weeklyPrice ? `• ${formatCurrency(product.weeklyPrice!)}/week` : ''}
         </div>
 
         {/* Actions */}
         <div className="mt-auto flex items-center gap-3">
-          <button className="flex-1 bg-brand-500 hover:bg-brand-400 text-black font-semibold py-2.5 rounded-lg transition-colors text-sm">
+          <Link href={`/product/${product.slug || product.id}`} className="flex-1 bg-brand-500 hover:bg-brand-400 text-black font-semibold py-2.5 rounded-lg transition-colors text-sm text-center">
             RENT NOW
-          </button>
-          <button className="p-2.5 rounded-lg border border-white/10 hover:border-brand-500/50 hover:bg-white/5 text-dark-300 hover:text-brand-500 transition-all">
-            <Heart size={20} />
+          </Link>
+          <button 
+            onClick={() => onWishlistToggle?.(product.id)}
+            className={`p-2.5 rounded-lg border transition-all ${
+              isWishlisted 
+                ? 'border-red-500/50 bg-red-500/10 text-red-500' 
+                : 'border-white/10 hover:border-brand-500/50 hover:bg-white/5 text-dark-300 hover:text-brand-500'
+            }`}
+          >
+            <Heart size={20} className={isWishlisted ? 'fill-red-500' : ''} />
           </button>
         </div>
       </div>

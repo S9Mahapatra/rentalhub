@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/server-utils';
 import { calculateLateFees } from '@/lib/utils';
 import Booking from '@/models/Booking';
 import Product from '@/models/Product';
+import '@/models/Category';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,7 +13,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     await connectToDatabase();
-    require('@/models/Category');
 
     const booking = await Booking.findOne({ _id: id, user: user.id })
       .populate({ path: 'product', populate: { path: 'category', select: 'name slug icon' } });

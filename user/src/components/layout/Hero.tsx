@@ -31,13 +31,13 @@ export default function Hero() {
           
           <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
             <span className="text-2xl font-semibold text-white">
-              FROM $15/hr
+              FROM ₹299/day
             </span>
             <Link
-              href="/quote"
+              href="/products"
               className="px-8 py-3.5 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-full transition-all duration-300 transform hover:scale-105"
             >
-              GET INSTANT QUOTE
+              BROWSE RENTALS
             </Link>
           </div>
         </motion.div>

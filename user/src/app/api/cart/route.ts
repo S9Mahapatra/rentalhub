@@ -5,6 +5,7 @@ import { calculateRentalPrice } from '@/lib/utils';
 import Cart from '@/models/Cart';
 import Product from '@/models/Product';
 import Booking from '@/models/Booking';
+import '@/models/Category';
 
 const formatCart = (cartDoc: any) => {
   if (!cartDoc) return null;

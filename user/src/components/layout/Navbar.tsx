@@ -7,16 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSession, signOut } from 'next-auth/react';
 import { Search, Calendar, Heart, ShoppingBag, User } from 'lucide-react';
 
-const CATEGORIES = [
-  { name: 'CAMERAS', href: '/products?category=cameras' },
-  { name: 'LENSES', href: '/products?category=lenses' },
-  { name: 'LIGHTING', href: '/products?category=lighting' },
-  { name: 'AUDIO', href: '/products?category=audio' },
-  { name: 'DRONES', href: '/products?category=drones' },
-  { name: 'KITS', href: '/products?category=kits' },
-  { name: 'ACCESSORIES', href: '/products?category=accessories' },
-  { name: 'OFFERS', href: '/products?category=offers' },
-];
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -24,6 +14,34 @@ export default function Navbar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<{name: string; slug: string}[]>([]);
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/categories')
+      .then((r) => r.json())
+      .then((data) => {
+        const cats = (data.data || []).map((c: any) => ({ name: c.name, slug: c.slug }));
+        setCategories(cats);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    fetch('/api/wishlist')
+      .then((r) => r.json())
+      .then((data) => setWishlistCount((data.data || []).length))
+      .catch(() => {});
+    fetch('/api/cart')
+      .then((r) => r.json())
+      .then((data) => {
+        const items = data.data?.items || [];
+        setCartCount(items.reduce((s: number, i: any) => s + i.quantity, 0));
+      })
+      .catch(() => {});
+  }, [session]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,12 +100,12 @@ export default function Navbar() {
 
             <Link href="/wishlist" className={`hidden sm:flex items-center gap-2 text-sm transition-colors ${pathname === '/wishlist' ? 'text-brand-400' : 'text-dark-300 hover:text-white'}`}>
               <Heart size={18} />
-              <span>Wishlist (2)</span>
+              <span>Wishlist ({wishlistCount})</span>
             </Link>
 
             <Link href="/cart" className={`flex items-center gap-2 text-sm transition-colors ${pathname === '/cart' ? 'text-brand-400' : 'text-dark-300 hover:text-white'}`}>
               <ShoppingBag size={18} />
-              <span>Rent Bag (0)</span>
+              <span>Rent Bag ({cartCount})</span>
             </Link>
 
             {/* User Menu */}
@@ -138,13 +156,13 @@ export default function Navbar() {
 
         {/* Category Nav Row */}
         <div className="hidden md:flex items-center justify-center gap-8 py-3 overflow-x-auto no-scrollbar">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <Link 
               key={cat.name} 
-              href={cat.href}
+              href={`/products?category=${cat.slug}`}
               className="text-xs font-semibold tracking-widest text-dark-200 hover:text-brand-400 transition-colors whitespace-nowrap"
             >
-              {cat.name}
+              {cat.name.toUpperCase()}
             </Link>
           ))}
         </div>

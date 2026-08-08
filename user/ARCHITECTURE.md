@@ -5,13 +5,15 @@
 ```mermaid
 flowchart TD
     User[Portal User]
-    Frontend[Next.js Frontend :3000]
-    Backend[Express API :5000]
-    DB[(MongoDB)]
+    NextJS[Next.js App :3000]
+    APIRoutes[API Routes]
+    Mongoose[Mongoose ODM]
+    DB[(MongoDB Atlas)]
     
-    User --> Frontend
-    Frontend -->|API Calls| Backend
-    Backend --> DB
+    User --> NextJS
+    NextJS --> APIRoutes
+    APIRoutes --> Mongoose
+    Mongoose --> DB
 ```
 
 ## 2. Frontend Architecture
@@ -19,27 +21,28 @@ flowchart TD
 - **Framework**: Next.js 14 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **State**: React Context (Auth, Cart, Wishlist)
+- **Animations**: Framer Motion
+- **State**: React hooks (useState, useEffect)
 - **Routing**: File-based (App Router)
-- **Pages**: Home, Products, Product Detail, Cart, Wishlist, Bookings, Checkout, Auth
+- **Pages**: Home, Products, Product Detail, Cart, Wishlist, Bookings, Checkout, Auth, Profile
 
 ## 3. Backend Architecture
 
-- **Framework**: Express.js
+- **Framework**: Next.js API Routes (no separate Express server)
 - **Language**: TypeScript
-- **Database**: MongoDB with Mongoose ODM
-- **Auth**: JWT with HTTP-only cookies
-- **Structure**: Controllers, Routes, Models, Middleware
+- **Database**: MongoDB Atlas via Mongoose ODM
+- **Auth**: NextAuth.js with JWT strategy (credentials provider)
+- **Structure**: API routes in `src/app/api/`, Mongoose models in `src/models/`
 
 ## 4. Database Architecture
 
-Models: User, Category, Product, Cart, Wishlist, Booking, Order
+Mongoose Models: User, Category, Product, Cart, Booking, Order
 
 ## 5. Authentication Flow
 
 ```
-User -> Login/Register -> JWT Token -> Stored in localStorage/Cookie
-API Calls -> Bearer Token Header -> Middleware Verification -> Protected Routes
+User -> Login (email/password) -> NextAuth credentials provider -> JWT issued
+API Routes -> getServerSession(authOptions) -> JWT verification -> Protected routes
 ```
 
 ## 6. Rental Lifecycle
@@ -53,16 +56,14 @@ Browse -> Select Product -> Choose Dates -> Add to Cart -> Checkout
 
 ## 7. API Architecture
 
-RESTful API with:
+RESTful API routes under `/api/`:
 - Public routes: Products, Categories
-- Protected routes: Cart, Wishlist, Bookings, Orders, Payments
-- Rate limiting: 100 requests per 15 minutes
+- Protected routes: Cart, Wishlist, Bookings, Orders, Profile
+- Auth: NextAuth.js credential-based login
 
 ## 8. Security
 
-- JWT authentication with HTTP-only cookies
-- Password hashing with bcryptjs (12 rounds)
-- CORS configuration
-- Rate limiting
-- Input validation
-- Helmet.js security headers
+- NextAuth.js JWT authentication
+- Password hashing with bcryptjs
+- Server-side session validation via getServerSession()
+- Input validation with Zod

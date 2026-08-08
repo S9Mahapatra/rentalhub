@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
 import Cart from '@/models/Cart';
+import '@/models/Category';
 
 const formatCart = (cartDoc: any) => {
   if (!cartDoc) return null;

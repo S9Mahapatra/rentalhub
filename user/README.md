@@ -1,6 +1,6 @@
 # RentalHub User Portal
 
-A premium full-stack rental marketplace built with Next.js, TypeScript, Prisma, and NextAuth.
+A premium full-stack rental marketplace built with Next.js, TypeScript, Mongoose, and NextAuth.
 
 ## Tech Stack
 

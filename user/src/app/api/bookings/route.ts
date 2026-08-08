@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/server-utils';
 import { calculateRentalPrice } from '@/lib/utils';
 import Booking from '@/models/Booking';
 import Product from '@/models/Product';
+import '@/models/Category';
 
 export async function GET(req: Request) {
   try {
@@ -11,7 +12,6 @@ export async function GET(req: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     await connectToDatabase();
-    require('@/models/Category');
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');

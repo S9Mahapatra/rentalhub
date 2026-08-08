@@ -15,15 +15,20 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const result = await signIn('credentials', { email, password, redirect: false });
-    setLoading(false);
+    try {
+      const result = await signIn('credentials', { email, password, redirect: false });
 
-    if (result?.error) {
-      toast.error('Invalid credentials');
-    } else {
-      toast.success('Welcome back!');
-      router.push('/');
-      router.refresh();
+      if (result?.error) {
+        toast.error('Invalid credentials');
+      } else {
+        toast.success('Welcome back!');
+        router.push('/');
+        router.refresh();
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
