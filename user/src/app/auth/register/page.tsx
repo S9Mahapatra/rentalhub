@@ -1,18 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const callbackUrl = searchParams.get('callbackUrl');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +34,7 @@ export default function RegisterPage() {
       if (result?.error) throw new Error('Login failed after registration');
 
       toast.success('Account created!');
-      router.push('/');
+      router.push(callbackUrl || '/');
       router.refresh();
     } catch (err: any) {
       toast.error(err.message || 'Registration failed');
@@ -105,11 +107,19 @@ export default function RegisterPage() {
 
         <p className="text-center text-neutral-500 font-medium text-sm mt-8">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-neutral-950 font-black hover:underline underline-offset-4 decoration-2 decoration-emerald-400">
+          <Link href={`/auth/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} className="text-neutral-950 font-black hover:underline underline-offset-4 decoration-2 decoration-emerald-400">
             Sign in
           </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[75vh] flex items-center justify-center">Loading...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

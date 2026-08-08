@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const callbackUrl = searchParams.get('callbackUrl');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +24,6 @@ export default function LoginPage() {
         toast.error('Invalid credentials');
       } else {
         toast.success('Welcome back!');
-        // Retrieve callbackUrl from the query parameters, if it exists
-        const urlParams = new URLSearchParams(window.location.search);
-        const callbackUrl = urlParams.get('callbackUrl');
         router.push(callbackUrl || '/');
         router.refresh();
       }
@@ -77,11 +76,19 @@ export default function LoginPage() {
 
         <p className="text-center text-neutral-500 font-medium text-sm mt-8">
           Don&apos;t have an account?{' '}
-          <Link href="/auth/register" className="text-neutral-950 font-black hover:underline underline-offset-4 decoration-2 decoration-emerald-400">
+          <Link href={`/auth/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} className="text-neutral-950 font-black hover:underline underline-offset-4 decoration-2 decoration-emerald-400">
             Sign up
           </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[75vh] flex items-center justify-center">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

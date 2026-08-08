@@ -72,7 +72,7 @@ export default function BookingWidget({ productId, isAvailable, minRentalDays }:
 
       if (res.status === 401) {
         toast.error('Please log in to rent this item.');
-        router.push('/auth/login?callbackUrl=' + encodeURIComponent(window.location.href));
+        router.push('/auth/login?callbackUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
         return;
       }
 

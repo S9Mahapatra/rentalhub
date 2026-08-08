@@ -180,11 +180,11 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="h-8 bg-dark-800 rounded w-48 mb-6 animate-pulse" />
+      <div className="max-w-5xl mx-auto px-4 py-12 md:py-20">
+        <div className="h-8 bg-neutral-200/60 rounded-xl w-48 mb-8 animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-80 bg-dark-800 rounded-2xl animate-pulse" />
-          <div className="h-80 bg-dark-800 rounded-2xl animate-pulse" />
+          <div className="h-80 bg-neutral-100/60 rounded-[32px] animate-pulse" />
+          <div className="h-80 bg-neutral-100/60 rounded-[32px] animate-pulse" />
         </div>
       </div>
     );
@@ -192,88 +192,88 @@ export default function ProfilePage() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-xl font-bold text-white mb-2">Profile unavailable</h2>
-        <p className="text-dark-400 mb-6">{error}</p>
-        <button onClick={() => window.location.reload()} className="px-6 py-2.5 bg-brand-600 text-white rounded-xl font-medium">
-          Retry
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
+        <h2 className="text-2xl font-black text-neutral-950 mb-2 tracking-tight">Profile unavailable</h2>
+        <p className="text-neutral-500 font-medium mb-8">{error}</p>
+        <button onClick={() => window.location.reload()} className="px-8 py-4 bg-neutral-950 hover:bg-neutral-800 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]">
+          RETRY
         </button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-white mb-6">My Profile</h1>
+    <div className="max-w-5xl mx-auto px-4 py-12 md:py-20">
+      <h1 className="text-3xl font-black text-neutral-950 mb-8 tracking-tight">My Profile</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-dark-800/40 border border-white/5 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Personal Info</h2>
-          <div className="space-y-4">
+        <div className="bg-white border border-neutral-200/80 rounded-[32px] p-6 sm:p-8 shadow-sm">
+          <h2 className="text-lg font-black text-neutral-950 mb-6">Personal Info</h2>
+          <div className="space-y-5">
             <div>
-              <label className="text-xs text-dark-400 mb-1 block">Name</label>
+              <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all"
               />
             </div>
             <div>
-              <label className="text-xs text-dark-400 mb-1 block">Email</label>
+              <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all"
               />
             </div>
             <div>
-              <label className="text-xs text-dark-400 mb-1 block">Phone</label>
+              <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Phone</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all"
                 placeholder="9876543210"
               />
             </div>
             <div>
-              <label className="text-xs text-dark-400 mb-1 block">Profile image URL</label>
+              <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Profile Image URL</label>
               <input
                 type="url"
                 value={profileImage}
                 onChange={(e) => setProfileImage(e.target.value)}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all"
                 placeholder="https://..."
               />
             </div>
-            <div className="text-xs text-dark-400">
-              Default address: {defaultAddress ? `${defaultAddress.label} · ${defaultAddress.city}` : 'None selected'}
+            <div className="text-[11px] font-medium text-neutral-500 bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
+              Default address: {defaultAddress ? <span className="font-bold text-neutral-950">{defaultAddress.label} · {defaultAddress.city}</span> : 'None selected'}
             </div>
             <button
               onClick={handleSaveProfile}
               disabled={saving}
-              className="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all"
+              className="w-full py-4 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] mt-2"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'SAVING...' : 'SAVE CHANGES'}
             </button>
           </div>
         </div>
 
-        <div className="bg-dark-800/40 border border-white/5 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Addresses</h2>
-          <div className="space-y-3 mb-4">
+        <div className="bg-[#F7F7F9] border border-neutral-200/80 rounded-[32px] p-6 sm:p-8 shadow-sm">
+          <h2 className="text-lg font-black text-neutral-950 mb-6">Addresses</h2>
+          <div className="space-y-3 mb-6">
             {addresses.length === 0 ? (
-              <p className="text-dark-400 text-sm">No addresses added yet</p>
+              <p className="text-neutral-500 text-sm font-medium">No addresses added yet.</p>
             ) : (
               addresses.map((addr) => (
-                <div key={addr.id} className="p-3 bg-dark-900/50 rounded-xl border border-white/5">
-                  <div className="flex items-center justify-between gap-3">
+                <div key={addr.id} className="p-5 bg-white rounded-[24px] border border-neutral-200/80 shadow-sm">
+                  <div className="flex items-center justify-between gap-3 mb-2">
                     <div className="min-w-0">
-                      <span className="text-white text-sm font-medium">{addr.label}</span>
+                      <span className="text-neutral-950 text-sm font-black">{addr.label}</span>
                       {addr.isDefault && (
-                        <span className="text-xs text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded ml-2">Default</span>
+                        <span className="text-[10px] font-black tracking-widest uppercase text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full ml-3">Default</span>
                       )}
                     </div>
                     <div className="flex gap-2">
@@ -281,7 +281,7 @@ export default function ProfilePage() {
                         <button
                           onClick={() => handleSetDefault(addr.id)}
                           disabled={saving}
-                          className="text-xs px-2.5 py-1 rounded-lg bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 transition-colors"
+                          className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900 transition-colors"
                         >
                           Make default
                         </button>
@@ -289,13 +289,13 @@ export default function ProfilePage() {
                       <button
                         onClick={() => handleRemoveAddress(addr.id)}
                         disabled={saving}
-                        className="text-xs px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                        className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                       >
                         Remove
                       </button>
                     </div>
                   </div>
-                  <p className="text-dark-400 text-xs mt-1">
+                  <p className="text-neutral-500 text-xs font-medium leading-relaxed">
                     {addr.street}, {addr.city}, {addr.state} {addr.zipCode}
                   </p>
                 </div>
@@ -303,37 +303,37 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="border-t border-white/5 pt-4">
-            <h3 className="text-sm font-medium text-white mb-3">Add New Address</h3>
-            <div className="space-y-3">
+          <div className="border-t border-neutral-200/80 pt-6 mt-6">
+            <h3 className="text-sm font-black text-neutral-950 mb-4">Add New Address</h3>
+            <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Label (e.g. Home, Office)"
                 value={newAddress.label}
                 onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-white border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all shadow-sm"
               />
               <input
                 type="text"
                 placeholder="Street Address"
                 value={newAddress.street}
                 onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-white border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all shadow-sm"
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="City"
                   value={newAddress.city}
                   onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                  className="bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 transition-all"
+                  className="w-full bg-white border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all shadow-sm"
                 />
                 <input
                   type="text"
                   placeholder="State"
                   value={newAddress.state}
                   onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                  className="bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 transition-all"
+                  className="w-full bg-white border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all shadow-sm"
                 />
               </div>
               <input
@@ -341,30 +341,30 @@ export default function ProfilePage() {
                 placeholder="ZIP Code"
                 value={newAddress.zipCode}
                 onChange={(e) => setNewAddress({ ...newAddress, zipCode: e.target.value })}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-white border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all shadow-sm"
               />
               <input
                 type="text"
                 placeholder="Country"
                 value={newAddress.country}
                 onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })}
-                className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 transition-all"
+                className="w-full bg-white border border-neutral-200/80 rounded-2xl px-4 py-3.5 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all shadow-sm"
               />
-              <label className="flex items-center gap-2 text-sm text-dark-300">
+              <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 cursor-pointer pt-2">
                 <input
                   type="checkbox"
                   checked={newAddress.isDefault}
                   onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
-                  className="accent-brand-500"
+                  className="w-5 h-5 accent-neutral-950 rounded"
                 />
                 Make this the default address
               </label>
               <button
                 onClick={handleAddAddress}
                 disabled={saving}
-                className="px-6 py-2.5 bg-dark-700 hover:bg-dark-600 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all w-full"
+                className="w-full py-4 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] mt-4"
               >
-                Add Address
+                ADD ADDRESS
               </button>
             </div>
           </div>
