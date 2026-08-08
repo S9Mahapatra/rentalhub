@@ -7,6 +7,7 @@ export interface IProduct extends Document {
   shortDescription: string;
   category: mongoose.Types.ObjectId;
   images: string[];
+  imageUrl?: string;
   dailyPrice: number;
   weeklyPrice?: number;
   monthlyPrice?: number;
@@ -35,6 +36,7 @@ const ProductSchema = new Schema<IProduct>(
     shortDescription: { type: String, default: '' },
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
     images: [{ type: String }],
+    imageUrl: { type: String },
     dailyPrice: { type: Number, required: true },
     weeklyPrice: { type: Number },
     monthlyPrice: { type: Number },

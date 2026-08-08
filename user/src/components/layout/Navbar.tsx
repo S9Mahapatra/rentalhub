@@ -47,7 +47,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center flex-shrink-0">
             <span className="text-3xl sm:text-4xl font-serif font-bold text-brand-500 tracking-tight">
-              Arcadia
+              Rentalhub
             </span>
           </Link>
 

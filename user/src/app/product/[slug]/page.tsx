@@ -88,16 +88,19 @@ export default function ProductDetailPage() {
     return <div className="max-w-7xl mx-auto px-4 py-20 text-center text-dark-400">Product not found</div>;
   }
 
+  const allImages = product.imageUrl ? [product.imageUrl, ...(product.images || [])] : (product.images || []);
+  const mainImage = allImages[selectedImage] || '/placeholder.jpg';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-dark-800 mb-4">
-            <Image src={product.images[selectedImage] || '/placeholder.jpg'} alt={product.name} fill className="object-cover" />
+            <Image src={mainImage} alt={product.name} fill className="object-cover" />
           </div>
-          {product.images.length > 1 && (
+          {allImages.length > 1 && (
             <div className="flex gap-2">
-              {product.images.map((img, i) => (
+              {allImages.map((img, i) => (
                 <button key={i} onClick={() => setSelectedImage(i)} className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImage === i ? 'border-brand-500 shadow-lg shadow-brand-500/25' : 'border-transparent opacity-60 hover:opacity-100'}`}>
                   <Image src={img} alt="" width={64} height={64} className="object-cover w-full h-full" />
                 </button>

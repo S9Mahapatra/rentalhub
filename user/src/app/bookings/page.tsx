@@ -78,7 +78,7 @@ export default function BookingsPage() {
             <motion.div key={booking.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-dark-800/40 border border-white/5 rounded-2xl p-4">
               <div className="flex gap-4">
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-dark-700 shrink-0">
-                  <Image src={booking.product.images[0] || '/placeholder.jpg'} alt={booking.product.name} fill className="object-cover" />
+                  <Image src={booking.product.imageUrl || booking.product.images?.[0] || '/placeholder.jpg'} alt={booking.product.name} fill className="object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">

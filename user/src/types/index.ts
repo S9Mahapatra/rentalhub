@@ -22,6 +22,7 @@ export interface ProductType {
   shortDescription: string;
   category: { id: string; name: string; slug: string; icon: string };
   images: string[];
+  imageUrl?: string;
   dailyPrice: number;
   weeklyPrice: number | null;
   monthlyPrice: number | null;
