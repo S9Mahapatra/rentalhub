@@ -3,19 +3,12 @@ node_modules/
 .pnp
 .pnp.js
 
-# Next.js
+# Build
+dist/
 .next/
 out/
 
-# Production
-build/
-
-# Misc
-.DS_Store
-*.tsbuildinfo
-next-env.d.ts
-
-# Env
+# Environment
 .env
 .env.local
 .env.development.local
@@ -30,6 +23,13 @@ yarn-error.log*
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Prisma
-prisma/migrations/
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
