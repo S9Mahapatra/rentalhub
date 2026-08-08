@@ -9,26 +9,32 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'RentalHub - Premium Rental Marketplace',
-  description: 'Rent premium products without the premium price. Electronics, furniture, sports gear and more.',
+  title: 'AeroRent - Premium Rental Marketplace',
+  description: 'Rent premium cameras, camping kits, and tech on demand.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`bg-app text-dark-200 antialiased ${inter.className}`}>
+      {/* Set light background bg-white or bg-[#F4F4F6] */}
+      <body className={`bg-white text-neutral-900 antialiased ${inter.className}`}>
         <SessionProvider>
+          {/* 1. Navbar enabled */}
           <Navbar />
-          <main className="min-h-screen pt-16">{children}</main>
+
+          {/* 2. Main wrapper (no top padding needed because Navbar is sticky) */}
+          <main className="min-h-screen">{children}</main>
+
+          {/* 3. Footer */}
           <Footer />
+
           <Toaster
             position="bottom-right"
             toastOptions={{
               style: {
-                background: '#1e293b',
-                color: '#e2e8f0',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
+                background: '#171717',
+                color: '#ffffff',
+                borderRadius: '9999px',
               },
             }}
           />

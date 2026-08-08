@@ -70,6 +70,7 @@ export interface IBooking extends Document {
   lateDurationHours: number;
   lateDurationDays: number;
   lateFees: number;
+  damageCharge: number;
   returnCondition?: string;
   damageNotes?: string;
   missingAccessories: string[];
@@ -203,6 +204,7 @@ const BookingSchema = new Schema<IBooking>(
     lateDurationHours: { type: Number, default: 0 },
     lateDurationDays: { type: Number, default: 0 },
     lateFees: { type: Number, default: 0 },
+    damageCharge: { type: Number, default: 0 },
     returnCondition: { type: String },
     damageNotes: { type: String },
     missingAccessories: [{ type: String }],

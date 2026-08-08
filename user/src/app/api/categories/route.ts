@@ -5,7 +5,7 @@ import Category from '@/models/Category';
 export async function GET() {
   try {
     await connectToDatabase();
-    
+
     const categories = await Category.find({ isActive: true }).sort({ name: 1 });
 
     const mappedCategories = categories.map(c => {
