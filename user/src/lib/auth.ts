@@ -1,36 +1,44 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
 import connectToDatabase from './mongodb';
 import User from '@/models/User';
+import { loginSchema } from './validation';
+
+const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: 'jwt' },
+  session: { strategy: 'jwt', maxAge: SEVEN_DAYS_IN_SECONDS },
+  jwt: { maxAge: SEVEN_DAYS_IN_SECONDS },
   pages: { signIn: '/auth/login' },
-  secret: process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_JWT_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        phone: { label: 'Phone', type: 'tel' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        // Same parser the register route uses, so "+91 98765 43210" typed at
+        // sign-in matches the bare 9876543210 that was stored at sign-up.
+        const parsed = loginSchema.safeParse({
+          email: credentials?.email,
+          phone: credentials?.phone,
+        });
+        if (!parsed.success) return null;
 
         await connectToDatabase();
-        // select('+password') is needed because we set select: false in the schema
-        const user = await User.findOne({ email: credentials.email }).select('+password');
 
-        if (!user || !user.password) return null;
-
-        const isValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isValid) return null;
+        const user = await User.findOne({
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+        });
+        if (!user) return null;
 
         return {
           id: user._id.toString(),
-          name: user.name, 
-          email: user.email, 
+          name: user.name,
+          email: user.email,
           image: user.profileImage,
           role: user.role,
         };

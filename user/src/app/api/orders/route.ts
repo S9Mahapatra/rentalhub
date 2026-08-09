@@ -50,12 +50,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // Online orders must go through /api/payments/cashfree/create so the order
+    // is never confirmed without a verified payment.
+    if (parsed.data.paymentMode === 'online') {
+      return NextResponse.json(
+        { error: 'Use the Cashfree payment flow for online orders' },
+        { status: 400 }
+      );
+    }
+
     const result = await createRentalCheckoutOrder({
       userId: user.id,
       items: parsed.data.items,
       deliveryMethod: parsed.data.deliveryMethod,
       deliveryAddressId: parsed.data.deliveryAddressId || undefined,
       paymentMethod: parsed.data.paymentMethod,
+      paymentMode: 'cod',
     });
 
     if (!result.ok) {

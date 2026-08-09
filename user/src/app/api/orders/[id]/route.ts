@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getCurrentUser } from '@/lib/server-utils';
+import { deleteUserOrder } from '@/lib/rental-service';
 import Order from '@/models/Order';
 import Booking from '@/models/Booking';
 
@@ -60,6 +61,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   } catch (error) {
     console.error('Order GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch order' }, { status: 500 });
+  }
+}
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const result = await deleteUserOrder({ orderId: id, userId: user.id });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    return NextResponse.json({ success: true, data: result.data });
+  } catch (error) {
+    console.error('Order DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete order' }, { status: 500 });
   }
 }
 

@@ -20,27 +20,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password, phone } = parsed.data;
+    // registerSchema already lowercases the email and reduces the phone to a
+    // bare 10-digit number, so both match how they are stored and queried.
+    const { name, email, phone } = parsed.data;
 
     await connectToDatabase();
 
-    const normalizedEmail = email.toLowerCase();
-    const existing = await User.findOne({ email: normalizedEmail });
+    const existing = await User.findOne({ email });
     if (existing) {
-      return NextResponse.json({ error: 'Email already in use' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'An account with this email already exists. Sign in instead.' },
+        { status: 409 }
+      );
     }
 
-    const user = await User.create({
-      name,
-      email: normalizedEmail,
-      password,
-      phone,
-    });
+    const user = await User.create({ name, email, phone });
 
     return NextResponse.json(
       {
         success: true,
-        user: { id: user._id.toString(), name: user.name, email: user.email },
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+        },
       },
       { status: 201 }
     );

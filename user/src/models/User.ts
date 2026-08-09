@@ -1,5 +1,4 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
-import bcrypt from 'bcryptjs';
 
 export interface IAddress {
   label: string;
@@ -14,15 +13,17 @@ export interface IAddress {
 export interface IUser extends Document {
   name: string;
   email: string;
-  password?: string;
-  phone?: string;
+  /**
+   * Second half of the sign-in credential (email + phone), so it is required
+   * and stored as a plain 10-digit number — never formatted, never prefixed.
+   */
+  phone: number;
   profileImage?: string;
   role: 'user' | 'admin';
   addresses: IAddress[];
   wishlist: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
-  matchPassword(enteredPassword: string): Promise<boolean>;
 }
 
 const AddressSchema = new Schema<IAddress>({
@@ -49,15 +50,10 @@ const UserSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
-    password: {
-      type: String,
-      required: [true, 'Please provide a password'],
-      minlength: 6,
-      select: false, // Don't return password in queries by default
-    },
     phone: {
-      type: String,
-      trim: true,
+      type: Number,
+      required: [true, 'Please provide a phone number'],
+      index: true,
     },
     profileImage: {
       type: String,
@@ -75,32 +71,8 @@ const UserSchema = new Schema<IUser>(
       },
     ],
   },
-  {
-    timestamps: true,
-    toJSON: {
-      transform: function (doc, ret) {
-        delete ret.password;
-        return ret;
-      },
-    },
-  }
+  { timestamps: true }
 );
-
-UserSchema.pre('save', async function () {
-  if (!this.isModified('password')) {
-    return;
-  }
-
-  if (this.password) {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-  }
-});
-
-UserSchema.methods.matchPassword = async function (enteredPassword: string): Promise<boolean> {
-  if (!this.password) return false;
-  return await bcrypt.compare(enteredPassword, this.password);
-};
 
 // Prevent double compilation during hot reloads
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

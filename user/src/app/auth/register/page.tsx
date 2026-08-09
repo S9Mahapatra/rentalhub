@@ -3,38 +3,62 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { getSession, signIn } from 'next-auth/react';
 import toast from 'react-hot-toast';
+import {
+  User,
+  Mail,
+  Phone,
+  ArrowRight,
+  Loader2,
+  Sparkles
+} from 'lucide-react';
+import { sanitizeCallbackUrl } from '@/lib/safe-redirect';
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+
   const callbackUrl = searchParams.get('callbackUrl');
+  const destination = sanitizeCallbackUrl(callbackUrl);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // The mobile number is half of the sign-in credential, so a typo here
+    // locks the account out. Check it before the account is ever created.
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      toast.error('Enter a valid 10-digit mobile number.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, phone }),
+        body: JSON.stringify({ name, email, phone }),
       });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-      const result = await signIn('credentials', { email, password, redirect: false });
-      if (result?.error) throw new Error('Login failed after registration');
+      const result = await signIn('credentials', { email, phone, redirect: false });
+      if (!result?.ok || result.error) {
+        throw new Error('Account created, but sign-in failed. Please sign in.');
+      }
 
-      toast.success('Account created!');
-      router.push(callbackUrl || '/');
+      // Let the session settle before navigating, otherwise the destination
+      // page mounts without one and redirects back to login.
+      await getSession();
+
+      toast.success('Account created successfully!');
+      router.replace(destination);
       router.refresh();
     } catch (err: any) {
       toast.error(err.message || 'Registration failed');
@@ -44,73 +68,121 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center px-4">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-black text-neutral-950 mb-3 tracking-tight">Create Account</h1>
-          <p className="text-neutral-500 font-medium">Join RentalHub today</p>
+        
+        {/* Header */}
+        <div className="text-center mb-8 space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[10px] font-black uppercase tracking-widest text-emerald-800 mb-2 shadow-2xs">
+            <Sparkles className="w-3 h-3 text-emerald-600" />
+            <span>Join RentalHub</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-neutral-950 tracking-tight uppercase">
+            Create Account
+          </h1>
+          <p className="text-xs text-neutral-500 font-medium">
+            Rent top-tier gear or start earning with your equipment
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white border border-neutral-200/80 rounded-[32px] p-8 sm:p-10 shadow-2xl shadow-neutral-200/50 space-y-6">
-          <div>
-            <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Full Name</label>
-            <input 
-              type="text" 
-              required 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-5 py-4 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all" 
-              placeholder="John Doe" 
-            />
-          </div>
-          <div>
-            <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Email Address</label>
-            <input 
-              type="email" 
-              required 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-5 py-4 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all" 
-              placeholder="you@example.com" 
-            />
-          </div>
-          <div>
-            <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Phone (Optional)</label>
-            <input 
-              type="tel" 
-              value={phone} 
-              onChange={(e) => setPhone(e.target.value)} 
-              className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-5 py-4 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all" 
-              placeholder="9876543210" 
-            />
-          </div>
-          <div>
-            <label className="text-[10px] text-neutral-400 font-extrabold uppercase tracking-widest block mb-2 pl-1">Password</label>
-            <input 
-              type="password" 
-              required 
-              minLength={6} 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              className="w-full bg-neutral-50/50 border border-neutral-200/80 rounded-2xl px-5 py-4 text-sm font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent transition-all" 
-              placeholder="••••••••" 
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full py-4 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-sm rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] mt-2"
-          >
-            {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
-          </button>
-        </form>
+        {/* Main Card */}
+        <div className="bg-[#F4F4F6] border border-neutral-200/80 rounded-[28px] p-6 sm:p-8 shadow-2xs">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Full Name */}
+            <div>
+              <label className="text-[10px] text-neutral-400 font-black uppercase tracking-widest block mb-1.5 pl-1">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="w-4 h-4 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input 
+                  type="text" 
+                  required 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  className="w-full bg-white border border-neutral-200/80 rounded-2xl pl-11 pr-4 py-3 text-xs font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-neutral-950 transition-all shadow-2xs" 
+                  placeholder="John Doe" 
+                />
+              </div>
+            </div>
 
-        <p className="text-center text-neutral-500 font-medium text-sm mt-8">
+            {/* Email Address */}
+            <div>
+              <label className="text-[10px] text-neutral-400 font-black uppercase tracking-widest block mb-1.5 pl-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input 
+                  type="email" 
+                  required 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className="w-full bg-white border border-neutral-200/80 rounded-2xl pl-11 pr-4 py-3 text-xs font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-neutral-950 transition-all shadow-2xs" 
+                  placeholder="you@example.com" 
+                />
+              </div>
+            </div>
+
+            {/* Mobile Number — required, this is how you sign back in */}
+            <div>
+              <label className="text-[10px] text-neutral-400 font-black uppercase tracking-widest block mb-1.5 pl-1">
+                Mobile Number
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <span className="absolute left-11 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-400 pointer-events-none">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(-10))}
+                  className="w-full bg-white border border-neutral-200/80 rounded-2xl pl-[4.75rem] pr-4 py-3 text-xs font-semibold text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-neutral-950 transition-all shadow-2xs"
+                  placeholder="98765 43210"
+                />
+              </div>
+              <p className="text-[10px] text-neutral-400 font-medium mt-1.5 pl-1">
+                You&apos;ll sign in with your email and this number — no password.
+              </p>
+            </div>
+
+            {/* Submit Button */}
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full py-3.5 bg-neutral-950 hover:bg-neutral-800 disabled:opacity-60 text-white font-black text-xs uppercase tracking-wider rounded-full transition-all shadow-2xs flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Account</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-400" />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Footer Link */}
+        <p className="text-center text-neutral-500 font-medium text-xs mt-6">
           Already have an account?{' '}
-          <Link href={`/auth/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} className="text-neutral-950 font-black hover:underline underline-offset-4 decoration-2 decoration-emerald-400">
+          <Link 
+            href={`/auth/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} 
+            className="text-neutral-950 font-black hover:underline underline-offset-4 decoration-2 decoration-emerald-500"
+          >
             Sign in
           </Link>
         </p>
+
       </div>
     </div>
   );
@@ -118,7 +190,13 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="min-h-[75vh] flex items-center justify-center">Loading...</div>}>
+    <Suspense 
+      fallback={
+        <div className="min-h-[85vh] flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+        </div>
+      }
+    >
       <RegisterForm />
     </Suspense>
   );
